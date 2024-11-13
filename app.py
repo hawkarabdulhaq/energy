@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_lottie import st_lottie  # Import st_lottie from streamlit_lottie
 import json
 from datetime import datetime, timedelta
 import time
@@ -38,6 +39,7 @@ def main():
 
     # Display the countdown
     countdown = calculate_time_difference()
+    st.markdown("<h1 style='color: blue; text-align: center;'>Time left until registration closes:</h1>", unsafe_allow_html=True)
     st.markdown(f"<h2 style='text-align: center; font-size: 48px; color: red; font-weight: bold; font-family: Courier;'>{countdown}</h2>", unsafe_allow_html=True)
 
     # Course brief with start date
