@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import time
 
 def calculate_time_difference():
-    # Set the target date and time for countdown (Year, Month, Day, Hour)
+    # Set the target date and time for countdown
     target_date = datetime(2024, 11, 30, 0, 0, 0)
     now = datetime.now()
     diff = target_date - now
@@ -17,20 +17,26 @@ def calculate_time_difference():
         return "00:00:00:00"
 
 def main():
-    st.title('Countdown to Course Registration Deadline')
+    st.set_page_config(page_title="Early Bird Registration", page_icon=":alarm_clock:")
+    st.title('Early Bird Registration for Personalized Training for Managing Your Time and Energy')
+
+    # Description text
+    st.write("""
+    Welcome to the early bird registration for our innovative course, "Personalized Training for Managing Your Time and Energy for Maximizing Your Impact and Production." 
+    This course is delivered through Canvas and includes a mix of pre-recorded online sessions and interactive assignments. Additionally, you will receive personalized coaching to further enhance your learning experience. 
+    Register now to take advantage of our 50% early bird discount. Normally priced at 195,000 Iraqi Dinar, you can enroll now for just 97,500 Iraqi Dinar. 
+    This special offer is limited to the first 10 registrants, so secure your spot today!
+    """)
     
     # Using columns to center the countdown display
     col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
         countdown_placeholder = st.empty()  # Placeholder for dynamic countdown
-
-    st.subheader("Limited Tickets Available for This Course!")
-    st.write("Secure your spot now by enrolling early. Click the button below to go to the registration form.")
     
     # Link to your Google Form
     google_form_url = "https://docs.google.com/forms/d/e/1FAIpQLSfDyXAWlgczKY3mbYzlS1kVJtOUIetmYOI1wUOqx-qnAsMQAw/viewform?usp=sf_link"
     if st.button('Enroll Now', key="enroll"):
-        st.write(f"You are being redirected to the registration form.")
+        st.write("You are being redirected to the registration form.")
         st.markdown(f"[Click Here if you are not redirected]({google_form_url})", unsafe_allow_html=True)
     
     # Update the countdown every second
