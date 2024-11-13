@@ -1,14 +1,11 @@
 import streamlit as st
-from streamlit_lottie import st_lottie
-import requests
+import json
 from datetime import datetime, timedelta
 import time
 
-def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as file:
+        return json.load(file)
 
 def calculate_time_difference():
     # Set the target date and time for countdown
@@ -28,10 +25,9 @@ def main():
     st.set_page_config(page_title="Early Bird Registration", page_icon=":alarm_clock:")
     st.title('Early Bird Registration for Personalized Training for Managing Your Time and Energy')
 
-    # Load and display a Lottie animation from a URL or local file
-    lottie_url = 'https://assets9.lottiefiles.com/packages/lf20_EzPrWM.json'  # Replace with your actual URL or local path
-    lottie_json = load_lottieurl(lottie_url)
-    st_lottie(lottie_json, speed=1, height=300, key="animation")
+    # Load and display a Lottie animation from a local file
+    lottie_animation = load_lottiefile('energy/content/time.json')
+    st_lottie(lottie_animation, speed=1, height=300, key="animation")
 
     # Countdown display
     col1, col2, col3 = st.columns([1, 3, 1])
