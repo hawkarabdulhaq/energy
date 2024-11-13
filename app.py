@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_lottie import st_lottie
 import json
 from datetime import datetime, timedelta
 import time
@@ -25,7 +26,6 @@ def main():
     st.title('Early Bird Registration for Personalized Training for Managing Your Time and Energy')
 
     # Load and display a Lottie animation from a local file
-    # Assuming the app.py file is at the root of the 'energy' project
     lottie_animation = load_lottiefile('content/time.json')
     st_lottie(lottie_animation, speed=1, height=300, key="animation")
 
