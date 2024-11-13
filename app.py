@@ -18,23 +18,25 @@ def calculate_time_difference():
 
 def main():
     st.title('Countdown to Course Registration Deadline')
+    
+    # Using columns to center the countdown display
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        countdown_placeholder = st.empty()  # Placeholder for dynamic countdown
 
-    # Create placeholder elements for the countdown display
-    countdown_placeholder = st.empty()
     st.subheader("Limited Tickets Available for This Course!")
     st.write("Secure your spot now by enrolling early. Click the button below to go to the registration form.")
     
     # Link to your Google Form
     google_form_url = "https://docs.google.com/forms/d/e/1FAIpQLSfDyXAWlgczKY3mbYzlS1kVJtOUIetmYOI1wUOqx-qnAsMQAw/viewform?usp=sf_link"
-    enroll_button = st.button('Enroll Now')
+    if st.button('Enroll Now', key="enroll"):
+        st.write(f"You are being redirected to the registration form.")
+        st.markdown(f"[Click Here if you are not redirected]({google_form_url})", unsafe_allow_html=True)
     
     # Update the countdown every second
     while True:
         countdown = calculate_time_difference()
-        countdown_placeholder.markdown(f"### Time left until registration closes: {countdown}")
-        if enroll_button:
-            st.write(f"You are being redirected to the registration form.")
-            st.markdown(f"[Click Here if you are not redirected]({google_form_url})", unsafe_allow_html=True)
+        countdown_placeholder.markdown(f"<h1 style='text-align: center; font-size: 48px;'>Time left until registration closes: {countdown}</h1>", unsafe_allow_html=True)
         time.sleep(1)
 
 if __name__ == "__main__":
