@@ -20,7 +20,7 @@ def main():
     st.write("Secure your spot now by enrolling early. Click the button below to go to the registration form.")
     
     # Link to your Google Form
-    google_form_url = "https://your_google_form_url_here"
+    google_form_url = "https://docs.google.com/forms/d/e/1FAIpQLSfDyXAWlgczKY3mbYzlS1kVJtOUIetmYOI1wUOqx-qnAsMQAw/viewform?usp=sf_link"
     if st.button('Enroll Now'):
         st.write(f"You are being redirected to the registration form.")
         st.markdown(f"[Click Here if you are not redirected]({google_form_url})", unsafe_allow_html=True)
