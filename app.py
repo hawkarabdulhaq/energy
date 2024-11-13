@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_lottie import st_lottie  # Import st_lottie from streamlit_lottie
 import json
 from datetime import datetime
+import time
 
 # Function to load a local Lottie file
 def load_lottiefile(filepath: str):
@@ -35,10 +36,14 @@ def main():
     lottie_animation = load_lottiefile('content/time.json')
     st_lottie(lottie_animation, speed=1, height=300, key="animation")
 
-    # Countdown display with the timer in red and bold, using Courier font
-    countdown = calculate_time_difference()
+    # Live countdown display with the timer in red and bold, using Courier font
+    countdown_placeholder = st.empty()
     st.markdown("<p style='font-family: Courier; text-align: center; font-size: 24px;'>Time left until registration closes:</p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-family: Courier; text-align: center; font-size: 48px; color: red; font-weight: bold;'>{countdown}</p>", unsafe_allow_html=True)
+    
+    while True:
+        countdown = calculate_time_difference()
+        countdown_placeholder.markdown(f"<p style='font-family: Courier; text-align: center; font-size: 48px; color: red; font-weight: bold;'>{countdown}</p>", unsafe_allow_html=True)
+        time.sleep(1)  # Update every second
 
     # Course description, start date, and pricing information, all in black with Courier font
     st.markdown("""
