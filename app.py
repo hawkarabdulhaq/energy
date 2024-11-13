@@ -23,29 +23,28 @@ def calculate_time_difference():
 
 def main():
     st.set_page_config(page_title="Early Bird Registration", page_icon=":alarm_clock:")
-    st.title('Early Bird Registration for Personalized Training for Managing Your Time and Energy')
+    st.title('Early Bird Course Registration')
 
     # Load and display a Lottie animation from a local file
     lottie_animation = load_lottiefile('content/time.json')
     st_lottie(lottie_animation, speed=1, height=300, key="animation")
 
     # Display the countdown
+    st.markdown("<h1 style='color: black; text-align: center; font-family: Courier;'>Registration closes in:</h1>", unsafe_allow_html=True)
     countdown = calculate_time_difference()
-    st.markdown("<h1 style='color: blue; text-align: center;'>Time left until registration closes:</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h2 style='text-align: center; font-size: 48px; color: red;'>{countdown}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; font-size: 48px; color: red; font-weight: bold; font-family: Courier;'>{countdown}</h2>", unsafe_allow_html=True)
 
     # Course brief
     st.write("""
-    Welcome to the early bird registration for our innovative course, "Personalized Training for Managing Your Time and Energy for Maximizing Your Impact and Production."
-    This course is delivered through Canvas and includes a mix of pre-recorded online sessions and interactive assignments. Additionally, you will receive personalized coaching to further enhance your learning experience.
-    Register now to take advantage of our 50% early bird discount. Normally priced at 195,000 Iraqi Dinar, you can enroll now for just 97,500 Iraqi Dinar.
-    This special offer is limited to the first 10 registrants, so secure your spot today!
-    """)
+    Welcome to the early bird registration for "Personalized Training for Managing Your Time and Energy." 
+    This innovative course includes pre-recorded sessions, interactive assignments, and personalized coaching.
+    Register now to secure your spot at a 50% discount—only 97,500 Iraqi Dinar!
+    """, style={'font-family': 'Courier'})
 
     # Enrollment button
     google_form_url = "https://docs.google.com/forms/d/e/1FAIpQLSfDyXAWlgczKY3mbYzlS1kVJtOUIetmYOI1wUOqx-qnAsMQAw/viewform?usp=sf_link"
     if st.button('Enroll Now', key="enroll", on_click=None, args=None, kwargs=None, help=None, disabled=False):
-        st.markdown(f"<a style='display: block; text-align: center; background-color: orange; color: white; padding: 10px; border-radius: 5px; width: 100px; margin: auto;' href='{google_form_url}'>Go to Registration</a>", unsafe_allow_html=True)
+        st.markdown(f"<a style='display: block; text-align: center; background-color: orange; color: white; padding: 10px; border-radius: 5px; width: 100px; margin: auto; font-family: Courier;' href='{google_form_url}'>Go to Registration</a>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
