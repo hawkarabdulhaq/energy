@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 def calculate_time_difference():
     # Set the target date and time for countdown (Year, Month, Day, Hour)
-    target_date = datetime(2023, 11, 30, 0, 0, 0)  # Adjust the year if necessary
+    target_date = datetime(2024, 11, 30, 0, 0, 0)  # Corrected the year
     now = datetime.now()
     diff = target_date - now
     if diff.total_seconds() > 0:
