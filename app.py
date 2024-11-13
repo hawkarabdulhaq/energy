@@ -8,9 +8,7 @@ def load_lottiefile(filepath: str):
     with open(filepath, 'r') as file:
         return json.load(file)
 
-# Function to calculate the time difference for the countdown
 def calculate_time_difference():
-    # Set the target date and time for the countdown
     target_date = datetime(2024, 11, 30, 0, 0, 0)
     now = datetime.now()
     diff = target_date - now
@@ -23,12 +21,12 @@ def calculate_time_difference():
         return "00:00:00:00"
 
 def main():
-    # Setup the page configuration
     st.set_page_config(page_title="Early Bird Registration", page_icon=":alarm_clock:")
     st.title('Early Bird Registration for Personalized Training for Managing Your Time and Energy')
 
     # Load and display a Lottie animation from a local file
-    lottie_animation = load_lottiefile('absolute/path/to/energy/content/time.json')
+    # Assuming the app.py file is at the root of the 'energy' project
+    lottie_animation = load_lottiefile('content/time.json')
     st_lottie(lottie_animation, speed=1, height=300, key="animation")
 
     # Display the countdown
