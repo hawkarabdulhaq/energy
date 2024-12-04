@@ -4,6 +4,8 @@ from google_auth_oauthlib.flow import Flow
 import os
 import json
 from google.auth.transport.requests import Request
+import pathlib
+import cachetools
 
 # App setup
 st.title("Energy Log App with Google Sign-In")
@@ -26,6 +28,10 @@ if 'credentials' not in st.session_state:
     st.session_state['credentials'] = None
 if 'email' not in st.session_state:
     st.session_state['email'] = None
+if 'flow' not in st.session_state:
+    st.session_state['flow'] = None
+if 'state' not in st.session_state:
+    st.session_state['state'] = None
 
 def get_authorization_url():
     flow = Flow.from_client_config(
@@ -54,7 +60,7 @@ def fetch_token(flow, code):
 
 def get_user_email(credentials):
     id_info = id_token.verify_oauth2_token(
-        credentials.id_token, Request(), GOOGLE_CLIENT_ID
+        credentials._id_token, Request(), GOOGLE_CLIENT_ID
     )
     return id_info.get("email")
 
@@ -76,10 +82,10 @@ def save_user_data(email, data):
 
 # Main App Logic
 if st.session_state['credentials'] is None:
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params  # Updated function
     if 'code' in query_params:
         code = query_params['code'][0]
-        if 'flow' in st.session_state:
+        if 'flow' in st.session_state and st.session_state['flow'] is not None:
             flow = st.session_state['flow']
             try:
                 credentials = fetch_token(flow, code)
@@ -94,8 +100,16 @@ if st.session_state['credentials'] is None:
                 st.stop()
         else:
             st.error("Session expired. Please try logging in again.")
+            # Clear session state to reset the flow
+            for key in ['flow', 'state']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            # Provide a login link again
+            auth_url = get_authorization_url()
+            st.write(f"[Click here to sign in with Google]({auth_url})")
             st.stop()
     else:
+        # No code in query params; provide login link
         auth_url = get_authorization_url()
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
