@@ -76,9 +76,17 @@ query_params = st.query_params
 st.write("Debug: Raw query parameters", query_params)  # Log the raw query parameters
 
 if "code" in query_params:
-    code = query_params["code"][0].strip()  # Extract the full authorization code
-    st.write("Debug: Extracted authorization code", code)  # Log the extracted code
+    # Attempt to extract the full authorization code
+    try:
+        code = query_params.get("code", [None])[0]  # Get the first value of 'code' parameter
+        if not code:
+            raise ValueError("Authorization code is missing.")
+        st.write("Debug: Extracted authorization code", code)  # Log the extracted code
+    except Exception as e:
+        st.error(f"Failed to extract authorization code: {e}")
+        st.stop()
 
+    # Proceed with token exchange
     try:
         token_info = get_token(code)
         st.session_state["auth0_token"] = token_info['access_token']
