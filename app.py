@@ -11,10 +11,11 @@ AUTH0_DOMAIN = 'dev-fe5xpi2tlu60xwyp.us.auth0.com'
 AUTH0_CLIENT_ID = 'Frk7PWaSV0TpxBaOnmvbtjJSu0767TdX'
 AUTH0_CLIENT_SECRET = st.secrets["auth0"]["AUTH0_CLIENT_SECRET"]  # Retrieved securely
 AUTH0_CALLBACK_URL = 'https://manageyourenergy.streamlit.app/'  # Your app's URL
-AUTH0_AUDIENCE = f'https://{AUTH0_DOMAIN}/userinfo'
+AUTH0_AUDIENCE = 'https://dev-fe5xpi2tlu60xwyp.us.auth0.com/api/v2/'  # Updated API Identifier
 AUTH0_AUTHORIZE_URL = f'https://{AUTH0_DOMAIN}/authorize'
 AUTH0_TOKEN_URL = f'https://{AUTH0_DOMAIN}/oauth/token'
 AUTH0_USER_INFO_URL = f'https://{AUTH0_DOMAIN}/userinfo'
+
 
 # ------------------------------
 # App Setup
