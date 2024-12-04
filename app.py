@@ -75,8 +75,13 @@ def get_user_info(token):
 query_params = st.query_params
 st.write("Debug: Query parameters received", query_params)
 
+query_params = st.query_params
+st.write("Debug: Query parameters received", query_params)
+
 if "code" in query_params:
-    code = query_params["code"][0]
+    code = query_params["code"][0]  # Ensure this extracts the full authorization code
+    st.write("Debug: Extracted authorization code", code)  # Add a debug statement for the extracted code
+
     try:
         token_info = get_token(code)
         st.session_state["auth0_token"] = token_info['access_token']
@@ -89,6 +94,7 @@ if "code" in query_params:
     except Exception as e:
         st.error(f"Authentication failed: {e}")
         st.stop()
+
 elif st.session_state["auth0_token"]:
     email = st.session_state["email"]
     st.sidebar.success(f"Signed in as {email}")
