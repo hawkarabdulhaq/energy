@@ -53,6 +53,7 @@ def get_authorization_url():
         include_granted_scopes="true",
         prompt="consent",
     )
+    st.write("Generated state:", state)  # Debugging: Display generated state
     return auth_url, state
 
 
@@ -85,12 +86,21 @@ def save_user_data(email, data):
 # Main app logic
 if st.session_state["credentials"] is None:
     query_params = st.query_params  # Updated to use the new API
+    st.write("Query parameters received:", query_params)  # Debugging: Display query parameters
+
     if "code" in query_params and "state" in query_params:
         code = query_params["code"][0]
         state = query_params["state"][0]
 
+        st.write("Received state from query parameters:", state)  # Debugging: Display received state
+        st.write("Stored state in session:", st.session_state["state"])  # Debugging: Display stored state
+
         if state != st.session_state["state"]:
             st.error("State parameter does not match. Possible CSRF attack.")
+            st.write("Debugging Information:")
+            st.write("State mismatch occurred. Ensure that:")
+            st.write("- Generated state is stored properly in `st.session_state['state']`.")
+            st.write("- Query parameters are not altered during redirection.")
             st.stop()
         else:
             flow = create_flow()
@@ -110,6 +120,8 @@ if st.session_state["credentials"] is None:
         # Generate authorization URL and save the state
         auth_url, state = get_authorization_url()
         st.session_state["state"] = state
+        st.write("Authorization URL:", auth_url)  # Debugging: Display authorization URL
+        st.write("Stored state for verification:", state)  # Debugging: Display state being stored
 
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
