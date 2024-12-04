@@ -75,8 +75,8 @@ def get_user_info(token):
 query_params = st.query_params
 st.write("Debug: Raw query parameters", query_params)  # Log the raw query parameters
 
-if "code" in query_params and len(query_params["code"][0]) > 10:
-    code = query_params["code"][0]  # Extract the full authorization code
+if "code" in query_params:
+    code = query_params["code"][0].strip()  # Extract the full authorization code
     st.write("Debug: Extracted authorization code", code)  # Log the extracted code
 
     try:
@@ -91,10 +91,6 @@ if "code" in query_params and len(query_params["code"][0]) > 10:
     except Exception as e:
         st.error(f"Authentication failed: {e}")
         st.stop()
-
-elif "code" in query_params and len(query_params["code"][0]) <= 10:
-    st.error("Invalid or incomplete authorization code received.")
-    st.stop()
 
 elif st.session_state["auth0_token"]:
     email = st.session_state["email"]
