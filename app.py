@@ -4,6 +4,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 import os
 import json
+import secrets
 
 # App setup
 st.title("Energy Log App with Google Sign-In")
@@ -20,16 +21,7 @@ REDIRECT_URI = st.secrets["redirect_uri"]
 
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email"]
 
-# Initialize session state variables
-if "state" not in st.session_state:
-    st.session_state["state"] = None
-if "credentials" not in st.session_state:
-    st.session_state["credentials"] = None
-if "email" not in st.session_state:
-    st.session_state["email"] = None
-
-
-def create_flow():
+def create_flow(state=None):
     """Create a new OAuth flow."""
     return Flow.from_client_config(
         {
@@ -38,24 +30,28 @@ def create_flow():
                 "client_secret": GOOGLE_CLIENT_SECRET,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [REDIRECT_URI],
             }
         },
         scopes=SCOPES,
         redirect_uri=REDIRECT_URI,
+        state=state
     )
 
+def generate_state():
+    """Generate a random state string."""
+    return secrets.token_urlsafe(16)
 
 def get_authorization_url():
     """Generate the authorization URL and state."""
-    flow = create_flow()
-    auth_url, state = flow.authorization_url(
+    state = generate_state()
+    flow = create_flow(state=state)
+    auth_url, _ = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
-        prompt="consent",
+        prompt="consent"
     )
-    st.write("Generated state:", state)  # Debugging: Display generated state
     return auth_url, state
-
 
 def get_user_info(credentials):
     """Retrieve user information from the ID token."""
@@ -63,7 +59,6 @@ def get_user_info(credentials):
         credentials.id_token, Request(), GOOGLE_CLIENT_ID
     )
     return id_info.get("email")
-
 
 def load_user_data(email):
     """Load the user's data from their JSON file."""
@@ -74,7 +69,6 @@ def load_user_data(email):
             return user_data.get("entries", [])
     return []
 
-
 def save_user_data(email, data):
     """Save the user's data to their JSON file."""
     user_file = os.path.join(USER_DATABASE, f"{email}.json")
@@ -82,47 +76,27 @@ def save_user_data(email, data):
     with open(user_file, "w") as file:
         json.dump(user_data, file)
 
-
 # Main app logic
-if st.session_state["credentials"] is None:
-    query_params = st.query_params  # Updated to use the new API
-    st.write("Query parameters received:", query_params)  # Debugging: Display query parameters
+if "credentials" not in st.session_state:
+    st.session_state["credentials"] = None
 
+if st.session_state["credentials"] is None:
+    query_params = st.query_params
     if "code" in query_params and "state" in query_params:
         code = query_params["code"][0]
         state = query_params["state"][0]
-
-        st.write("Received state from query parameters:", state)  # Debugging: Display received state
-        st.write("Stored state in session:", st.session_state["state"])  # Debugging: Display stored state
-
-        if state != st.session_state["state"]:
-            st.error("State parameter does not match. Possible CSRF attack.")
-            st.write("Debugging Information:")
-            st.write("State mismatch occurred. Ensure that:")
-            st.write("- Generated state is stored properly in `st.session_state['state']`.")
-            st.write("- Query parameters are not altered during redirection.")
-            st.stop()
-        else:
-            flow = create_flow()
-            flow.fetch_token(code=code)
-
-            credentials = flow.credentials
-            st.session_state["credentials"] = credentials
-
-            email = get_user_info(credentials)
-            st.session_state["email"] = email
-
-            # Clear query parameters from the URL
-            st.experimental_set_query_params()
-
-            st.experimental_rerun()
+        flow = create_flow(state=state)
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+        st.session_state["credentials"] = credentials
+        email = get_user_info(credentials)
+        st.session_state["email"] = email
+        # Clear query parameters from the URL
+        st.experimental_set_query_params()
+        st.experimental_rerun()
     else:
-        # Generate authorization URL and save the state
         auth_url, state = get_authorization_url()
-        st.session_state["state"] = state
-        st.write("Authorization URL:", auth_url)  # Debugging: Display authorization URL
-        st.write("Stored state for verification:", state)  # Debugging: Display state being stored
-
+        # No need to store state in session; it's in the URL
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
 else:
@@ -160,7 +134,7 @@ else:
 
     # Logout Button
     if st.sidebar.button("Log Out"):
-        for key in ["state", "credentials", "email"]:
+        for key in ["credentials", "email"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.experimental_rerun()
