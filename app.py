@@ -1,72 +1,48 @@
 import streamlit as st
-from streamlit_lottie import st_lottie  # Import st_lottie from streamlit_lottie
-import json
-from datetime import datetime
-import time
+from utils.authentication import authenticate_user, create_user
+from utils.data_handler import load_user_data, save_user_data
+import os
 
-# Function to load a local Lottie file
-def load_lottiefile(filepath: str):
-    with open(filepath, 'r') as file:
-        return json.load(file)
+# App title
+st.title("Energy Log App")
 
-def calculate_time_difference():
-    target_date = datetime(2024, 11, 30, 0, 0, 0)
-    now = datetime.now()
-    diff = target_date - now
-    if diff.total_seconds() > 0:
-        days = diff.days
-        hours, remainder = divmod(diff.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        return f"{days:02}:{hours:02}:{minutes:02}:{seconds:02}"
-    else:
-        return "00:00:00:00"
+# Authentication
+st.sidebar.title("Sign In or Register")
+action = st.sidebar.radio("Action", ["Sign In", "Register"])
 
-def main():
-    st.set_page_config(page_title="Early Bird Registration", page_icon=":alarm_clock:")
-    
-    # Title with font set to Courier and justified text alignment
-    st.markdown("""
-    <h1 style='text-align: justify; font-family: Courier;'>
-    Early Bird Registration for Personalized Training for Managing Your Time and Energy
-    </h1>
-    <p style='font-family: Courier;'>Course by <a href='https://hawkardemo.streamlit.app/' target='_blank'>Hawkar Ali Abdulhaq</a></p>
-    """, unsafe_allow_html=True)
+if action == "Register":
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    if st.sidebar.button("Register"):
+        if create_user(username, password):
+            st.sidebar.success("User registered successfully. Please sign in.")
+        else:
+            st.sidebar.error("Username already exists. Please choose a different one.")
+elif action == "Sign In":
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    if st.sidebar.button("Sign In"):
+        if authenticate_user(username, password):
+            st.sidebar.success("Welcome, " + username)
+            # Main app logic
+            st.subheader(f"Hello, {username}! Log Your Energy Levels Below.")
+            data = load_user_data(username)
+            
+            # Log energy data
+            time_block = st.selectbox("Select Time Block", ["6–8 AM", "8–10 AM", "10–12 PM", "12–2 PM", "2–4 PM", "4–6 PM", "6–8 PM"])
+            energy_level = st.slider("Energy Level (1-10)", 1, 10)
+            task = st.text_input("What task did you do?")
+            notes = st.text_area("Additional Notes (optional)")
 
-    # Load and display the Lottie animation from a local file
-    lottie_animation = load_lottiefile('content/time.json')
-    st_lottie(lottie_animation, speed=1, height=300, key="animation")
+            if st.button("Save Entry"):
+                data.append({"time_block": time_block, "energy_level": energy_level, "task": task, "notes": notes})
+                save_user_data(username, data)
+                st.success("Entry saved!")
 
-    # Live countdown display with the timer in red and bold, using Courier font
-    countdown_placeholder = st.empty()
-    st.markdown("<p style='font-family: Courier; text-align: center; font-size: 24px;'>Time left until registration closes:</p>", unsafe_allow_html=True)
-    
-    while True:
-        countdown = calculate_time_difference()
-        countdown_placeholder.markdown(f"<p style='font-family: Courier; text-align: center; font-size: 48px; color: red; font-weight: bold;'>{countdown}</p>", unsafe_allow_html=True)
-        time.sleep(1)  # Update every second
+            # Display daily entries
+            st.subheader("Your Daily Entries")
+            for entry in data:
+                st.write(f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}")
 
-    # Course description, start date, and pricing information, all in black with Courier font
-    st.markdown("""
-    <p style='font-family: Courier;'>
-    Welcome to the early bird registration for our innovative course, "Personalized Training for Managing Your Time and Energy for Maximizing Your Impact and Production." 
-    This course is delivered through Canvas and includes a mix of pre-recorded online sessions and interactive assignments. Additionally, you will receive personalized coaching to further enhance your learning experience.
-    Register now to take advantage of our 50% early bird discount. Normally priced at 195,000 Iraqi Dinar, you can enroll now for just 97,500 Iraqi Dinar.
-    This special offer is limited to the first 10 registrants, so secure your spot today!
-    <strong>The course will start on 1st December 2024.</strong>
-    </p>
-    """, unsafe_allow_html=True)
-
-    # Enrollment button
-    google_form_url = "https://docs.google.com/forms/d/e/1FAIpQLSfDyXAWlgczKY3mbYzlS1kVJtOUIetmYOI1wUOqx-qnAsMQAw/viewform?usp=sf_link"
-    st.markdown(f"""
-    <a style='display: block; text-align: center; background-color: orange; color: white; padding: 10px; border-radius: 5px; width: 200px; margin: auto; font-family: Courier; text-decoration: none;' href='{google_form_url}'>Enroll Now</a>
-    """, unsafe_allow_html=True)
-
-    # Copyright notice
-    st.markdown("""
-    <hr>
-    <p style='text-align: center; font-family: Courier;'>All Rights Reserved <a href='http://www.habdulhaq.com' target='_blank'>www.habdulhaq.com</a> 2024</p>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+        else:
+            st.sidebar.error("Invalid username or password. Please try again.")
