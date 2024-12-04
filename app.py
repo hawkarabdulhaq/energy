@@ -36,7 +36,7 @@ def get_user_email():
     """Authenticate user using Google Sign-In and return their email."""
     auth_url, state = flow.authorization_url(prompt="consent")
     st.write(f"[Click here to sign in with Google]({auth_url})")
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params  # Updated to use st.query_params
 
     if "code" in query_params:
         code = query_params["code"][0]
