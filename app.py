@@ -25,11 +25,14 @@ flow = Flow.from_client_config(
             "client_secret": GOOGLE_CLIENT_SECRET,
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [REDIRECT_URI],
+            "redirect_uris": [REDIRECT_URI],  # Make sure this matches your Google Cloud Console settings
         }
     },
     scopes=["openid", "https://www.googleapis.com/auth/userinfo.email"],
 )
+
+flow.redirect_uri = REDIRECT_URI  # Explicitly set the redirect URI
+
 
 # Authentication Functions
 def get_user_email():
