@@ -21,14 +21,16 @@ REDIRECT_URI = st.secrets["redirect_uri"]
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email"]
 
 # Initialize session state variables
-if 'credentials' not in st.session_state:
-    st.session_state['credentials'] = None
-if 'email' not in st.session_state:
-    st.session_state['email'] = None
-if 'state' not in st.session_state:
-    st.session_state['state'] = None
+if "state" not in st.session_state:
+    st.session_state["state"] = None
+if "credentials" not in st.session_state:
+    st.session_state["credentials"] = None
+if "email" not in st.session_state:
+    st.session_state["email"] = None
 
-def create_flow(state=None):
+
+def create_flow():
+    """Create a new OAuth flow."""
     return Flow.from_client_config(
         {
             "web": {
@@ -40,25 +42,30 @@ def create_flow(state=None):
         },
         scopes=SCOPES,
         redirect_uri=REDIRECT_URI,
-        state=state
     )
 
+
 def get_authorization_url():
+    """Generate the authorization URL and state."""
     flow = create_flow()
     auth_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true',
-        prompt='consent'
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
     )
     return auth_url, state
 
+
 def get_user_info(credentials):
+    """Retrieve user information from the ID token."""
     id_info = id_token.verify_oauth2_token(
         credentials.id_token, Request(), GOOGLE_CLIENT_ID
     )
     return id_info.get("email")
 
+
 def load_user_data(email):
+    """Load the user's data from their JSON file."""
     user_file = os.path.join(USER_DATABASE, f"{email}.json")
     if os.path.exists(user_file):
         with open(user_file, "r") as file:
@@ -66,51 +73,50 @@ def load_user_data(email):
             return user_data.get("entries", [])
     return []
 
+
 def save_user_data(email, data):
+    """Save the user's data to their JSON file."""
     user_file = os.path.join(USER_DATABASE, f"{email}.json")
     user_data = {"entries": data}
     with open(user_file, "w") as file:
         json.dump(user_data, file)
 
+
 # Main app logic
-if st.session_state['credentials'] is None:
-    query_params = st.experimental_get_query_params()
-    if 'code' in query_params and 'state' in query_params:
-        code = query_params['code'][0]
-        state = query_params['state'][0]
+if st.session_state["credentials"] is None:
+    query_params = st.query_params  # Updated to use the new API
+    if "code" in query_params and "state" in query_params:
+        code = query_params["code"][0]
+        state = query_params["state"][0]
 
-        # Retrieve the stored state
-        stored_state = st.session_state.get('state')
-
-        if state != stored_state:
-            st.error('State parameter does not match. Possible CSRF attack.')
+        if state != st.session_state["state"]:
+            st.error("State parameter does not match. Possible CSRF attack.")
             st.stop()
         else:
-            # Recreate the flow with the stored state
-            flow = create_flow(state=state)
+            flow = create_flow()
             flow.fetch_token(code=code)
 
             credentials = flow.credentials
-            st.session_state['credentials'] = credentials
+            st.session_state["credentials"] = credentials
 
             email = get_user_info(credentials)
-            st.session_state['email'] = email
+            st.session_state["email"] = email
 
-            # Clear query parameters
+            # Clear query parameters from the URL
             st.experimental_set_query_params()
 
             st.experimental_rerun()
     else:
-        # Generate authorization URL and store state
+        # Generate authorization URL and save the state
         auth_url, state = get_authorization_url()
-        st.session_state['state'] = state
+        st.session_state["state"] = state
 
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
 else:
     # User is authenticated
-    credentials = st.session_state['credentials']
-    email = st.session_state['email']
+    credentials = st.session_state["credentials"]
+    email = st.session_state["email"]
 
     st.sidebar.success(f"Signed in as {email}")
     st.subheader(f"Welcome, {email}! Log Your Energy Levels Below.")
@@ -118,18 +124,15 @@ else:
     data = load_user_data(email)
 
     # Log Energy Data
-    time_block = st.selectbox("Select Time Block", ["6–8 AM", "8–10 AM", "10–12 PM", "12–2 PM", "2–4 PM", "4–6 PM", "6–8 PM"])
+    time_block = st.selectbox(
+        "Select Time Block", ["6–8 AM", "8–10 AM", "10–12 PM", "12–2 PM", "2–4 PM", "4–6 PM", "6–8 PM"]
+    )
     energy_level = st.slider("Energy Level (1-10)", 1, 10)
     task = st.text_input("What task did you do?")
     notes = st.text_area("Additional Notes (optional)")
 
     if st.button("Save Entry"):
-        data.append({
-            "time_block": time_block,
-            "energy_level": energy_level,
-            "task": task,
-            "notes": notes
-        })
+        data.append({"time_block": time_block, "energy_level": energy_level, "task": task, "notes": notes})
         save_user_data(email, data)
         st.success("Entry saved!")
 
@@ -138,15 +141,14 @@ else:
     if data:
         for entry in data:
             st.write(
-                f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | "
-                f"Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}"
+                f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}"
             )
     else:
         st.write("No entries yet.")
 
     # Logout Button
     if st.sidebar.button("Log Out"):
-        for key in ['credentials', 'email', 'state']:
+        for key in ["state", "credentials", "email"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.experimental_rerun()
