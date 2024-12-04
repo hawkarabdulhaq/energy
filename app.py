@@ -73,16 +73,18 @@ def get_user_info(token):
 # Main App Logic
 # ------------------------------
 query_params = st.query_params
-st.write("Debug: Query parameters received", query_params)
+st.write("Debug: Raw query parameters", query_params)  # Log the raw query parameters
 
-query_params = st.query_params
-st.write("Debug: Query parameters received", query_params)
-
-if "code" in query_params:
-    code = query_params["code"][0]  # Ensure this extracts the full authorization code
+if "code" in query_params and query_params["code"]:
+    code = query_params["code"][0].strip()  # Ensure this extracts the full authorization code
     st.write("Debug: Extracted authorization code", code)  # Add a debug statement for the extracted code
 
     try:
+        # Validate that the authorization code is complete
+        if len(code) < 10:  # Adjust threshold as needed
+            st.error("Invalid authorization code received.")
+            st.stop()
+
         token_info = get_token(code)
         st.session_state["auth0_token"] = token_info['access_token']
         st.write("Debug: Token info", token_info)  # Log token info
