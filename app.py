@@ -89,7 +89,7 @@ if "email" not in st.session_state:
 if st.session_state["credentials"] is None:
     # Ensure the cookies are loaded
     cookies = cookie_manager.get_all()
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params  # Updated to use the new API
 
     if "code" in query_params and "state" in query_params:
         code = query_params["code"][0]
@@ -112,7 +112,7 @@ if st.session_state["credentials"] is None:
             email = get_user_info(credentials)
             st.session_state["email"] = email
             # Clear query parameters from the URL
-            st.experimental_set_query_params()
+            st.set_query_params()  # Updated to use the new API
             st.experimental_rerun()
     else:
         # Generate state and store it in a cookie
