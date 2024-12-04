@@ -121,4 +121,21 @@ else:
     notes = st.text_area("Additional Notes (optional)")
 
     if st.button("Save Entry"):
-        data.append({"time_block": time_block, "energy_level": energy_level, "task": task, "notes": not
+        data.append({"time_block": time_block, "energy_level": energy_level, "task": task, "notes": notes})
+        save_user_data(email, data)
+        st.success("Entry saved!")
+
+    # Display Daily Entries
+    st.subheader("Your Daily Entries")
+    if data:
+        for entry in data:
+            st.write(f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}")
+    else:
+        st.write("No entries yet.")
+
+    # Logout Button
+    if st.sidebar.button("Log Out"):
+        for key in ['credentials', 'email', 'state']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.experimental_rerun()
