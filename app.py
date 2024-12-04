@@ -16,7 +16,6 @@ AUTH0_AUTHORIZE_URL = f'https://{AUTH0_DOMAIN}/authorize'
 AUTH0_TOKEN_URL = f'https://{AUTH0_DOMAIN}/oauth/token'
 AUTH0_USER_INFO_URL = f'https://{AUTH0_DOMAIN}/userinfo'
 
-# [Rest of the script remains the same as above]
 # ------------------------------
 # App Setup
 # ------------------------------
@@ -88,7 +87,7 @@ def save_user_data(email, data):
 # ------------------------------
 # Main App Logic
 # ------------------------------
-query_params = st.experimental_get_query_params()
+query_params = st.query_params  # Updated function
 if "code" in query_params:
     code = query_params["code"][0]
     try:
@@ -97,8 +96,8 @@ if "code" in query_params:
         user_info = get_user_info(st.session_state["auth0_token"])
         st.session_state["email"] = user_info['email']
         # Clear query parameters
-        st.experimental_set_query_params()
-        st.experimental_rerun()
+        st.set_query_params()
+        st.experimental_rerun()  # Update this line based on your Streamlit version
     except Exception as e:
         st.error(f"Authentication failed: {e}")
         st.stop()
@@ -150,7 +149,7 @@ elif st.session_state["auth0_token"]:
         for key in ["auth0_token", "email"]:
             if key in st.session_state:
                 del st.session_state[key]
-        st.experimental_rerun()
+        st.experimental_rerun()  # Update this line based on your Streamlit version
 else:
     login()
     st.stop()
