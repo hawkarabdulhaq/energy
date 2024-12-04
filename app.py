@@ -1,9 +1,9 @@
 import streamlit as st
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
 import os
 import json
-from google.auth.transport.requests import Request
 
 # App setup
 st.title("Energy Log App with Google Sign-In")
@@ -18,10 +18,17 @@ GOOGLE_CLIENT_ID = st.secrets["google_client_id"]
 GOOGLE_CLIENT_SECRET = st.secrets["google_client_secret"]
 REDIRECT_URI = st.secrets["redirect_uri"]
 
-# Scopes
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email"]
 
-def get_flow(state=None):
+# Initialize session state variables
+if 'credentials' not in st.session_state:
+    st.session_state['credentials'] = None
+if 'email' not in st.session_state:
+    st.session_state['email'] = None
+if 'state' not in st.session_state:
+    st.session_state['state'] = None
+
+def create_flow(state=None):
     return Flow.from_client_config(
         {
             "web": {
@@ -36,11 +43,13 @@ def get_flow(state=None):
         state=state
     )
 
-def get_authorization_url(flow):
+def get_authorization_url():
+    flow = create_flow()
     auth_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
-        prompt='consent')
+        prompt='consent'
+    )
     return auth_url, state
 
 def get_user_info(credentials):
@@ -50,7 +59,6 @@ def get_user_info(credentials):
     return id_info.get("email")
 
 def load_user_data(email):
-    """Load the user's data from their JSON file."""
     user_file = os.path.join(USER_DATABASE, f"{email}.json")
     if os.path.exists(user_file):
         with open(user_file, "r") as file:
@@ -59,59 +67,54 @@ def load_user_data(email):
     return []
 
 def save_user_data(email, data):
-    """Save the user's data to their JSON file."""
     user_file = os.path.join(USER_DATABASE, f"{email}.json")
     user_data = {"entries": data}
     with open(user_file, "w") as file:
         json.dump(user_data, file)
 
-# Initialize session state variables
-if 'credentials' not in st.session_state:
-    st.session_state['credentials'] = None
-if 'email' not in st.session_state:
-    st.session_state['email'] = None
-if 'state' not in st.session_state:
-    st.session_state['state'] = None
-
-# Main App Logic
+# Main app logic
 if st.session_state['credentials'] is None:
-    query_params = st.query_params
+    query_params = st.experimental_get_query_params()
     if 'code' in query_params and 'state' in query_params:
         code = query_params['code'][0]
         state = query_params['state'][0]
-        if state != st.session_state['state']:
+
+        # Retrieve the stored state
+        stored_state = st.session_state.get('state')
+
+        if state != stored_state:
             st.error('State parameter does not match. Possible CSRF attack.')
+            st.stop()
         else:
-            flow = get_flow(state=state)
+            # Recreate the flow with the stored state
+            flow = create_flow(state=state)
             flow.fetch_token(code=code)
+
             credentials = flow.credentials
-            st.session_state['credentials'] = {
-                'token': credentials.token,
-                'refresh_token': credentials.refresh_token,
-                'token_uri': credentials.token_uri,
-                'client_id': credentials.client_id,
-                'client_secret': credentials.client_secret,
-                'scopes': credentials.scopes
-            }
+            st.session_state['credentials'] = credentials
+
             email = get_user_info(credentials)
             st.session_state['email'] = email
-            # Clear query parameters from the URL
+
+            # Clear query parameters
             st.experimental_set_query_params()
+
             st.experimental_rerun()
     else:
-        flow = get_flow()
-        auth_url, state = get_authorization_url(flow)
+        # Generate authorization URL and store state
+        auth_url, state = get_authorization_url()
         st.session_state['state'] = state
+
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
 else:
-    # Rebuild the credentials object
-    creds_info = st.session_state['credentials']
-    credentials = Request().from_token_response(creds_info)
+    # User is authenticated
+    credentials = st.session_state['credentials']
     email = st.session_state['email']
 
     st.sidebar.success(f"Signed in as {email}")
     st.subheader(f"Welcome, {email}! Log Your Energy Levels Below.")
+
     data = load_user_data(email)
 
     # Log Energy Data
@@ -121,7 +124,12 @@ else:
     notes = st.text_area("Additional Notes (optional)")
 
     if st.button("Save Entry"):
-        data.append({"time_block": time_block, "energy_level": energy_level, "task": task, "notes": notes})
+        data.append({
+            "time_block": time_block,
+            "energy_level": energy_level,
+            "task": task,
+            "notes": notes
+        })
         save_user_data(email, data)
         st.success("Entry saved!")
 
@@ -129,7 +137,10 @@ else:
     st.subheader("Your Daily Entries")
     if data:
         for entry in data:
-            st.write(f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}")
+            st.write(
+                f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | "
+                f"Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}"
+            )
     else:
         st.write("No entries yet.")
 
