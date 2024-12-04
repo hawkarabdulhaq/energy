@@ -1,4 +1,3 @@
 streamlit
-google-auth
-google-auth-oauthlib
-extra_streamlit_components
+auth0-python
+requests
