@@ -10,7 +10,8 @@ st.title("Energy Log App with Google Sign-In")
 
 # Directory to store user data
 USER_DATABASE = "database/users/"
-os.makedirs(USER_DATABASE, exist_ok=True)
+if not os.path.exists(USER_DATABASE):
+    os.makedirs(USER_DATABASE)
 
 # Google OAuth Configurations
 GOOGLE_CLIENT_ID = st.secrets["google_client_id"]
@@ -25,7 +26,7 @@ flow = Flow.from_client_config(
             "client_secret": GOOGLE_CLIENT_SECRET,
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [REDIRECT_URI],  # Make sure this matches your Google Cloud Console settings
+            "redirect_uris": [REDIRECT_URI],
         }
     },
     scopes=["openid", "https://www.googleapis.com/auth/userinfo.email"],
@@ -33,20 +34,24 @@ flow = Flow.from_client_config(
 
 flow.redirect_uri = REDIRECT_URI  # Explicitly set the redirect URI
 
-
 # Authentication Functions
 def get_user_email():
     """Authenticate user using Google Sign-In and return their email."""
-    auth_url, state = flow.authorization_url(prompt="consent")
-    st.write(f"[Click here to sign in with Google]({auth_url})")
-    query_params = st.query_params  # Updated to use st.query_params
+    try:
+        auth_url, state = flow.authorization_url(prompt="consent")
+        st.write(f"[Click here to sign in with Google]({auth_url})")
+        query_params = st.query_params
 
-    if "code" in query_params:
-        code = query_params["code"][0]
-        flow.fetch_token(code=code)
-        credentials = flow.credentials
-        id_info = id_token.verify_oauth2_token(credentials.id_token, Request(), GOOGLE_CLIENT_ID)
-        return id_info.get("email")
+        if "code" in query_params:
+            code = query_params["code"][0]
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
+            id_info = id_token.verify_oauth2_token(
+                credentials.id_token, Request(), GOOGLE_CLIENT_ID
+            )
+            return id_info.get("email")
+    except Exception as e:
+        st.error(f"Authentication failed: {e}")
     return None
 
 def load_user_data(email):
@@ -83,9 +88,11 @@ if email:
         save_user_data(email, data)
         st.success("Entry saved!")
 
-    # Display Daily Entries
-    st.subheader("Your Daily Entries")
-    for entry in data:
-        st.write(f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}")
+        # Update displayed data immediately
+        st.subheader("Your Updated Daily Entries")
+        for entry in data:
+            st.write(f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}")
+
 else:
     st.warning("Please sign in to continue.")
+    st.info("Click the link above to sign in with Google.")
