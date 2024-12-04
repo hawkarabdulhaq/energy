@@ -5,6 +5,10 @@ from google.auth.transport.requests import Request
 import os
 import json
 import secrets
+from extra_streamlit_components import CookieManager
+
+# Initialize CookieManager
+cookie_manager = CookieManager()
 
 # App setup
 st.title("Energy Log App with Google Sign-In")
@@ -42,16 +46,15 @@ def generate_state():
     """Generate a random state string."""
     return secrets.token_urlsafe(16)
 
-def get_authorization_url():
-    """Generate the authorization URL and state."""
-    state = generate_state()
+def get_authorization_url(state):
+    """Generate the authorization URL."""
     flow = create_flow(state=state)
     auth_url, _ = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
         prompt="consent"
     )
-    return auth_url, state
+    return auth_url
 
 def get_user_info(credentials):
     """Retrieve user information from the ID token."""
@@ -76,27 +79,47 @@ def save_user_data(email, data):
     with open(user_file, "w") as file:
         json.dump(user_data, file)
 
-# Main app logic
+# Initialize session state variables
 if "credentials" not in st.session_state:
     st.session_state["credentials"] = None
+if "email" not in st.session_state:
+    st.session_state["email"] = None
 
+# Main app logic
 if st.session_state["credentials"] is None:
-    query_params = st.query_params
+    # Ensure the cookies are loaded
+    cookies = cookie_manager.get_all()
+    query_params = st.experimental_get_query_params()
+
     if "code" in query_params and "state" in query_params:
         code = query_params["code"][0]
         state = query_params["state"][0]
-        flow = create_flow(state=state)
-        flow.fetch_token(code=code)
-        credentials = flow.credentials
-        st.session_state["credentials"] = credentials
-        email = get_user_info(credentials)
-        st.session_state["email"] = email
-        # Clear query parameters from the URL
-        st.experimental_set_query_params()
-        st.experimental_rerun()
+        # Retrieve state from cookie
+        stored_state = cookies.get("oauth_state")
+        if stored_state is None:
+            st.error("State cookie not found. Possible CSRF attack.")
+            st.stop()
+        elif state != stored_state:
+            st.error("State parameter does not match. Possible CSRF attack.")
+            st.stop()
+        else:
+            # Clear the state cookie
+            cookie_manager.delete("oauth_state")
+            flow = create_flow(state=state)
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
+            st.session_state["credentials"] = credentials
+            email = get_user_info(credentials)
+            st.session_state["email"] = email
+            # Clear query parameters from the URL
+            st.experimental_set_query_params()
+            st.experimental_rerun()
     else:
-        auth_url, state = get_authorization_url()
-        # No need to store state in session; it's in the URL
+        # Generate state and store it in a cookie
+        state = generate_state()
+        auth_url = get_authorization_url(state)
+        # Set the state in a cookie
+        cookie_manager.set("oauth_state", state)
         st.write(f"[Click here to sign in with Google]({auth_url})")
         st.stop()
 else:
@@ -127,7 +150,8 @@ else:
     if data:
         for entry in data:
             st.write(
-                f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}"
+                f"**{entry['time_block']}**: Energy {entry['energy_level']}/10 | "
+                f"Task: {entry['task']} | Notes: {entry.get('notes', 'N/A')}"
             )
     else:
         st.write("No entries yet.")
