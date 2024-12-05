@@ -5,6 +5,7 @@ import json
 import datetime
 import base64
 import os
+from activity import get_activity_types  # Import activity types from activity.py
 
 # GitHub Configuration
 GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
@@ -101,9 +102,14 @@ if st.session_state["page"] == "Log Energy":
     st.subheader("Energy Level")
     energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
 
-    # Task Input
-    st.subheader("Task")
-    task = st.text_input("What task did you do?")
+    # Activity Type Input
+    st.subheader("Select Activity Type")
+    activity_categories = get_activity_types()  # Fetch activity categories
+    activity_types = [activity for category in activity_categories.values() for activity in category]  # Flatten the list
+    selected_activity = st.selectbox("Activity", activity_types)
+
+    # Custom Task Input (Optional)
+    task = st.text_input("Additional Details for Activity (Optional)")
 
     # Notes Input
     st.subheader("Notes")
@@ -115,6 +121,7 @@ if st.session_state["page"] == "Log Energy":
             new_entry = {
                 "Time Block": st.session_state["selected_block"],
                 "Energy Level": energy_level,
+                "Activity Type": selected_activity,
                 "Task": task,
                 "Notes": notes,
                 "Timestamp": str(datetime.datetime.now())
