@@ -40,31 +40,43 @@ def view_logs_page(log_data, task_data, sleep_data):
     # Task data is not date-specific; display all tasks
 
     # Prepare Energy Series Data
-    day_energy_data["Start Hour"] = (
-        day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
-    )
-    energy_series = [
-        {"time": f"{hour}:00", "value": i + 1}
-        for hour, i in zip(day_energy_data["Start Hour"], range(len(day_energy_data)))
-    ]
+    try:
+        day_energy_data["Start Hour"] = (
+            day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
+        )
+        energy_series = [
+            {"time": f"{hour}:00", "value": i + 1}
+            for hour, i in zip(day_energy_data["Start Hour"], range(len(day_energy_data)))
+        ]
+    except Exception as e:
+        st.error(f"Error preparing energy data for the chart: {e}")
+        return
 
     # Prepare Task Weight Data
-    task_weight_series = [
-        {"time": f"{hour}:00", "value": len(activity.split()) if isinstance(activity, str) else 0}
-        for hour, activity in zip(day_energy_data["Start Hour"], day_energy_data["Activity Type"])
-    ]
+    try:
+        task_weight_series = [
+            {"time": f"{hour}:00", "value": len(activity.split()) if isinstance(activity, str) else 0}
+            for hour, activity in zip(day_energy_data["Start Hour"], day_energy_data["Activity Type"])
+        ]
+    except Exception as e:
+        st.error(f"Error preparing task weight data for the chart: {e}")
+        return
 
     # Prepare Sleep Series Data
-    if not selected_sleep_data.empty:
-        sleep_series = [
-            {
-                "time": sleep_start,
-                "value": duration,
-            }
-            for sleep_start, duration in zip(selected_sleep_data["Sleep Start"], selected_sleep_data["Duration (hrs)"])
-        ]
-    else:
-        sleep_series = []
+    try:
+        if not selected_sleep_data.empty:
+            sleep_series = [
+                {
+                    "time": sleep_start,
+                    "value": duration,
+                }
+                for sleep_start, duration in zip(selected_sleep_data["Sleep Start"], selected_sleep_data["Duration (hrs)"])
+            ]
+        else:
+            sleep_series = []
+    except Exception as e:
+        st.error(f"Error preparing sleep data for the chart: {e}")
+        return
 
     # Combo Chart Options
     combo_chart_options = {
@@ -119,9 +131,12 @@ def view_logs_page(log_data, task_data, sleep_data):
 
     # Render Combo Chart
     st.subheader("🔋 Energy Levels, Task Weights, and Sleep Patterns")
-    renderLightweightCharts(
-        [{"chart": combo_chart_options, "series": combo_chart_series}], key="comboChart"
-    )
+    try:
+        renderLightweightCharts(
+            [{"chart": combo_chart_options, "series": combo_chart_series}], key="comboChart"
+        )
+    except Exception as e:
+        st.error(f"Error rendering the chart: {e}")
 
     # Display Detailed Logs
     st.subheader("📋 Detailed Logs")
