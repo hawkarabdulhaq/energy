@@ -32,9 +32,11 @@ def task_page():
         selected_task_length = st.session_state["selected_task_length"]
         st.write(f"✅ **Selected Task Length:** {selected_task_length}")
 
-    # Step 3: Add Additional Details (Optional)
-    st.subheader("3️⃣ Additional Details")
-    task_details = st.text_area("Add any details or notes about the task (optional):")
+    # Step 3: Quantitative Inputs
+    st.subheader("3️⃣ Quantify the Task")
+    task_effort = st.slider("Estimated Effort (Hours)", 1, 10, 5, key="task_effort")  # Slider for hours
+    task_priority = st.radio("Task Priority", ["Low", "Medium", "High"], key="task_priority")  # Priority options
+    task_weight = st.number_input("Task Weight (e.g., Importance or Difficulty)", min_value=1, max_value=10, value=5, key="task_weight")  # Numeric scale
 
     # Save Task Button
     if st.button("Save Task", key="save_task"):
@@ -45,7 +47,9 @@ def task_page():
             new_task = {
                 "Task Type": selected_task_type,
                 "Task Length": selected_task_length,
-                "Details": task_details,
+                "Effort (Hours)": task_effort,
+                "Priority": task_priority,
+                "Weight": task_weight,
             }
             st.session_state["tasks"].append(new_task)
             st.success("✅ Task saved successfully!")
@@ -59,8 +63,9 @@ def task_page():
     st.subheader("📋 Your Saved Tasks")
     if "tasks" in st.session_state and st.session_state["tasks"]:
         for task in st.session_state["tasks"]:
-            st.write(f"- **{task['Task Type']}** ({task['Task Length']})")
-            if task["Details"]:
-                st.write(f"  - Details: {task['Details']}")
+            st.write(
+                f"- **{task['Task Type']}** ({task['Task Length']}, {task['Priority']} Priority)\n"
+                f"  - Effort: {task['Effort (Hours)']} hrs, Weight: {task['Weight']}"
+            )
     else:
         st.info("No tasks saved yet. Start adding tasks above!")
