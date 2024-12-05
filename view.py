@@ -1,41 +1,20 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-from streamlit_shap import st_shap
-import shap
-import json
-import os
+from streamlit_lightweight_charts import renderLightweightCharts
 
-# Define file path
-LOG_FILE_PATH = "database/energy_logs.json"
-
-# Helper Function to Load Data
-def load_logs():
-    """Load logs from the JSON file."""
-    if os.path.exists(LOG_FILE_PATH):
-        with open(LOG_FILE_PATH, "r") as file:
-            return json.load(file)
-    else:
-        st.error(f"Log file not found: {LOG_FILE_PATH}")
-        return []
-
-# Define the View Logs Page
-def view_logs_page():
-    """Interactive View Logs page."""
-    st.title("📊 Explore Your Daily Energy Logs")
-
-    # Fetch log data
-    log_data = load_logs()
+def view_logs_page(log_data):
+    """Enhanced View Logs page with a combo chart for Energy Levels and Task Weights."""
+    st.title("📊 Daily Energy Levels and Tasks")
 
     if not log_data:
-        st.warning("⚠️ No entries logged yet. Please add logs to the database.")
+        st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
         return
 
     # Convert log data to DataFrame
     df = pd.DataFrame(log_data)
 
     # Filter logs by selected date
-    st.subheader("📅 Filter by Date")
+    st.subheader("📅 Select a Date")
     df["Timestamp"] = pd.to_datetime(df["Timestamp"])
     available_dates = df["Timestamp"].dt.date.unique()
     selected_date = st.selectbox("Choose a date to view your logs", available_dates, key="select_date")
@@ -46,36 +25,69 @@ def view_logs_page():
         st.info(f"No logs available for {selected_date}.")
         return
 
-    # Summary Metrics
-    st.subheader("📋 Daily Summary")
-    total_entries = len(day_data)
-    avg_energy = round(day_data["Energy Level"].mean(), 1)
-    most_frequent_activity = day_data["Activity Type"].mode()[0] if not day_data["Activity Type"].mode().empty else "None"
+    # Prepare data for the chart
+    # Normalize time blocks to hours for simplicity (e.g., "6–8 AM" -> 6)
+    day_data["Start Hour"] = day_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Entries", total_entries, help="Total number of logs for the day.")
-    col2.metric("Average Energy Level", avg_energy, help="Average energy level across logs.")
-    col3.metric("Most Frequent Activity", most_frequent_activity, help="The activity logged most often.")
+    # Sort by start hour to ensure correct order
+    day_data = day_data.sort_values(by="Start Hour")
 
-    # Beeswarm-style Activity Chart
-    st.subheader("🎨 Activity Levels")
-    beeswarm_data = day_data[["Time Block", "Energy Level", "Activity Type"]]
-    beeswarm_data["Time Block (ordinal)"] = pd.Categorical(beeswarm_data["Time Block"], ordered=True)
-    fig_beeswarm = px.strip(
-        beeswarm_data,
-        x="Time Block (ordinal)",
-        y="Energy Level",
-        color="Activity Type",
-        title="Energy Levels Across Time Blocks",
-        labels={"Time Block (ordinal)": "Time Block", "Energy Level": "Energy Level"},
-        hover_data=["Activity Type"],
+    # Prepare the series data
+    energy_series = [
+        {"time": str(hour), "value": energy}
+        for hour, energy in zip(day_data["Start Hour"], day_data["Energy Level"])
+    ]
+
+    task_weight_series = [
+        {"time": str(hour), "value": len(task.split()) if isinstance(task, str) else 0}
+        for hour, task in zip(day_data["Start Hour"], day_data["Task"])
+    ]
+
+    # Chart options
+    combo_chart_options = {
+        "height": 400,
+        "rightPriceScale": {
+            "scaleMargins": {"top": 0.2, "bottom": 0.25},
+            "borderVisible": False,
+        },
+        "layout": {
+            "background": {"type": "solid", "color": "#ffffff"},
+            "textColor": "#000000",
+        },
+        "grid": {
+            "vertLines": {"color": "rgba(42, 46, 57, 0)"},
+            "horzLines": {"color": "rgba(42, 46, 57, 0.6)"},
+        },
+    }
+
+    combo_chart_series = [
+        {
+            "type": "Area",
+            "data": energy_series,
+            "options": {
+                "topColor": "rgba(38,198,218, 0.56)",
+                "bottomColor": "rgba(38,198,218, 0.04)",
+                "lineColor": "rgba(38,198,218, 1)",
+                "lineWidth": 2,
+            },
+        },
+        {
+            "type": "Histogram",
+            "data": task_weight_series,
+            "options": {
+                "color": "#26a69a",
+                "priceFormat": {"type": "volume"},
+                "priceScaleId": "",
+            },
+        },
+    ]
+
+    # Render the combo chart
+    st.subheader("🔋 Energy Levels and Task Weights")
+    renderLightweightCharts(
+        [{"chart": combo_chart_options, "series": combo_chart_series}], key="energyTaskChart"
     )
-    st.plotly_chart(fig_beeswarm, use_container_width=True)
 
-    # Display Detailed Data Table
+    # Display the raw data table for transparency
     st.subheader("📋 Detailed Logs")
     st.dataframe(day_data)
-
-# Call the View Logs Page
-if __name__ == "__main__":
-    view_logs_page()
