@@ -6,6 +6,7 @@ import datetime
 import base64
 import os
 from activity import get_activity_types  # Import activity types from activity.py
+from sleep import sleep_page  # Import the Sleep Log page
 
 # GitHub Configuration
 GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
@@ -20,6 +21,7 @@ HEADERS = {
 LOCAL_DB_FILE = "local_logs.json"  # Local database file
 
 # App Title
+st.set_page_config(page_title="Energy Log App", layout="wide")
 st.title("Energy Log App")
 
 # Initialize session state
@@ -29,23 +31,27 @@ if "data" not in st.session_state:
 if "selected_activity" not in st.session_state:
     st.session_state["selected_activity"] = None
 
+if "selected_block" not in st.session_state:
+    st.session_state["selected_block"] = None
 
-# Load local database
+
+# Helper Functions
 def load_local_logs():
+    """Load logs from local database file."""
     if os.path.exists(LOCAL_DB_FILE):
         with open(LOCAL_DB_FILE, "r") as file:
             return json.load(file)
     return []
 
 
-# Save logs to local database
 def save_local_logs(logs):
+    """Save logs to local database file."""
     with open(LOCAL_DB_FILE, "w") as file:
         json.dump(logs, file, indent=4)
 
 
-# Push logs to GitHub
 def push_logs_to_github(logs):
+    """Push logs to GitHub."""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
     response = requests.get(url, headers=HEADERS)
     sha = None
@@ -53,17 +59,12 @@ def push_logs_to_github(logs):
     if response.status_code == 200:  # File exists, fetch SHA for updating
         sha = response.json()["sha"]
 
-    # Create commit message and content
     commit_message = f"Update energy logs - {datetime.datetime.now()}"
     content = base64.b64encode(json.dumps(logs, indent=4).encode("utf-8")).decode("utf-8")
-    payload = {
-        "message": commit_message,
-        "content": content,
-    }
+    payload = {"message": commit_message, "content": content}
     if sha:
-        payload["sha"] = sha  # Add SHA for updates
+        payload["sha"] = sha
 
-    # Push data to GitHub
     push_response = requests.put(url, headers=HEADERS, data=json.dumps(payload))
     if push_response.status_code in [200, 201]:
         st.success("Logs synced to GitHub successfully!")
@@ -82,8 +83,11 @@ if st.sidebar.button("Log Energy"):
     st.session_state["page"] = "Log Energy"
 if st.sidebar.button("View Logs"):
     st.session_state["page"] = "View Logs"
+if st.sidebar.button("Sleep Log"):
+    st.session_state["page"] = "Sleep Log"
 
-# Page: Log Energy
+
+# Log Energy Page
 if st.session_state["page"] == "Log Energy":
     st.header("Log Your Energy Levels")
 
@@ -147,13 +151,17 @@ if st.session_state["page"] == "Log Energy":
         else:
             st.error("Please select both a time block and an activity before saving.")
 
-# Page: View Logs
+# View Logs Page
 elif st.session_state["page"] == "View Logs":
     st.header("Your Logged Entries")
 
-    # Display logs if available
+    # Display logs in a table
     if st.session_state["data"]:
         df = pd.DataFrame(st.session_state["data"])
         st.dataframe(df)
     else:
-        st.write("No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+        st.warning("No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+
+# Sleep Log Page
+elif st.session_state["page"] == "Sleep Log":
+    sleep_page()
