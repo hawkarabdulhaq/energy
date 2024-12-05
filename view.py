@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 
 def view_logs_page(log_data):
-    """View Logs dashboard for a single day with multiple components."""
-    st.header("📊 Daily Energy Dashboard")
+    """Simplified View Logs page."""
+    st.header("📊 Daily Energy Summary")
 
     if not log_data:
         st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
@@ -47,33 +47,11 @@ def view_logs_page(log_data):
         activity_counts,
         values="Count",
         names="Activity Type",
-        title="Activity Distribution for the Day",
+        title="Activity Distribution",
         hole=0.4,
     )
     st.plotly_chart(fig_pie, use_container_width=True)
 
-    # 3. Line Chart: Energy Levels Over Time
-    st.subheader("⏱️ Energy Levels Throughout the Day")
-    day_data_sorted = day_data.sort_values("Timestamp")
-    fig_line = px.line(
-        day_data_sorted,
-        x="Timestamp",
-        y="Energy Level",
-        color="Energy Level",
-        title="Energy Levels Over the Day",
-        labels={"Energy Level": "Energy Level", "Timestamp": "Time"},
-        markers=True,
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-    # Summary Stats
-    st.subheader("📊 Summary Statistics")
-    avg_energy = day_data["Energy Level"].mode()[0]
-    st.metric("Most Frequent Energy Level", avg_energy)
-
-    top_activity = day_data["Activity Type"].mode()[0] if not day_data["Activity Type"].empty else "N/A"
-    st.metric("Most Frequent Activity", top_activity)
-
-    st.write("### Raw Data")
+    # 3. Raw Data Table
+    st.subheader("📄 Raw Data")
     st.dataframe(day_data)
-
