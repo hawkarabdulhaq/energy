@@ -4,6 +4,7 @@ import os
 from log import log_energy_page  # Import the Log Energy page
 from sleep import sleep_page  # Import the Sleep Log page
 from view import view_logs_page  # Import the View Logs page
+from task import task_page  # Import the Task Management page
 
 # Local Database Configuration
 LOCAL_DB_FILE = "local_logs.json"  # Local database file
@@ -40,6 +41,8 @@ if st.sidebar.button("View Logs"):
     st.session_state["page"] = "View Logs"
 if st.sidebar.button("Sleep Log"):
     st.session_state["page"] = "Sleep Log"
+if st.sidebar.button("Task Management"):
+    st.session_state["page"] = "Task Management"
 
 
 # Page Routing
@@ -51,3 +54,6 @@ elif st.session_state["page"] == "View Logs":
 
 elif st.session_state["page"] == "Sleep Log":
     sleep_page()
+
+elif st.session_state["page"] == "Task Management":
+    task_page()
