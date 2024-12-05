@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import json
 import datetime
+import base64  # Import base64 for encoding content
 
 # GitHub Configuration
 GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
@@ -41,15 +42,13 @@ def fetch_logs_from_github():
     response = requests.get(url, headers=HEADERS)
 
     if response.status_code == 200:
-        content = json.loads(
-            requests.get(response.json()["download_url"]).text
-        )  # Decode file content
+        content = json.loads(base64.b64decode(response.json()["content"]).decode("utf-8"))
         return content
     elif response.status_code == 404:
         st.warning("No logs found in the GitHub repository.")
         return []
     else:
-        st.error("Error fetching logs from GitHub.")
+        st.error(f"Error fetching logs from GitHub: {response.status_code}")
         return []
 
 # Function to push logs to GitHub
@@ -63,10 +62,10 @@ def push_logs_to_github(logs):
 
     # Create commit message and content
     commit_message = f"Update energy logs - {datetime.datetime.now()}"
-    content = json.dumps(logs, indent=4).encode("utf-8").decode("utf-8")
+    content = base64.b64encode(json.dumps(logs, indent=4).encode("utf-8")).decode("utf-8")
     payload = {
         "message": commit_message,
-        "content": content.encode("utf-8").decode("base64"),  # Base64 encoding
+        "content": content,
     }
     if sha:
         payload["sha"] = sha  # Add SHA for updates
@@ -76,7 +75,7 @@ def push_logs_to_github(logs):
     if push_response.status_code in [200, 201]:
         st.success("Logs pushed to GitHub successfully!")
     else:
-        st.error("Error pushing logs to GitHub.")
+        st.error(f"Error pushing logs to GitHub: {push_response.status_code}")
 
 # Page: Log Energy
 if st.session_state["page"] == "Log Energy":
