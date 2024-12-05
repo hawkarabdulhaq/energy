@@ -32,24 +32,20 @@ def log_energy_page(log_data, save_to_local):
     st.subheader("2️⃣ Rate Your Energy Level")
     energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
 
-    # Step 3: Activity Type Selection with Dropdowns and Buttons
+    # Step 3: Activity Type Selection
     st.subheader("3️⃣ Select Activity Type")
     activity_categories = get_activity_types()  # Fetch activity categories
 
-    # Select category
-    selected_category = st.selectbox("Choose an activity category:", list(activity_categories.keys()))
-
-    if selected_category:
-        st.write(f"🗂️ **Selected Category:** {selected_category}")
-        st.markdown("### Choose an activity")
-        activity_cols = st.columns(len(activity_categories[selected_category]))
-        for i, activity in enumerate(activity_categories[selected_category]):
-            if activity_cols[i % len(activity_cols)].button(activity, key=f"activity_{activity}"):
-                st.session_state["selected_activity"] = activity
-
-    # Show selected activity
-    if st.session_state.get("selected_activity"):
-        st.write(f"✅ **Selected Activity:** {st.session_state['selected_activity']}")
+    # Group buttons under collapsible sections
+    selected_activity = None
+    for category, activities in activity_categories.items():
+        with st.expander(f"**{category}**"):
+            cols = st.columns(len(activities))
+            for i, activity in enumerate(activities):
+                if cols[i % len(cols)].button(activity, key=f"activity_{activity}"):
+                    selected_activity = activity
+                    st.session_state["selected_activity"] = selected_activity
+                    st.write(f"✅ **You selected:** {selected_activity}")
 
     # Step 4: Additional Details (Optional)
     st.subheader("4️⃣ Additional Details")
