@@ -2,48 +2,71 @@ import streamlit as st
 import pandas as pd
 from streamlit_lightweight_charts import renderLightweightCharts
 
-def view_logs_page(log_data):
-    """Enhanced View Logs page with a combo chart for Energy Levels and Task Weights."""
-    st.title("📊 Daily Energy Levels and Tasks")
+def view_logs_page(log_data, task_data, sleep_data):
+    """Enhanced View Logs page with a combo chart for Energy Levels, Task Weights, and Sleep Patterns."""
+    st.title("📊 Daily Energy Levels, Tasks, and Sleep Logs")
 
     if not log_data:
         st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
         return
 
     # Convert log data to DataFrame
-    df = pd.DataFrame(log_data)
+    energy_df = pd.DataFrame(log_data)
+
+    # Convert task data to DataFrame
+    task_df = pd.DataFrame(task_data)
+
+    # Convert sleep data to DataFrame
+    sleep_df = pd.DataFrame(sleep_data)
 
     # Filter logs by selected date
     st.subheader("📅 Select a Date")
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-    available_dates = df["Timestamp"].dt.date.unique()
+    energy_df["Timestamp"] = pd.to_datetime(energy_df["Timestamp"])
+    available_dates = energy_df["Timestamp"].dt.date.unique()
     selected_date = st.selectbox("Choose a date to view your logs", available_dates, key="select_date")
 
-    day_data = df[df["Timestamp"].dt.date == selected_date]
+    # Filter data for the selected date
+    day_energy_data = energy_df[energy_df["Timestamp"].dt.date == selected_date]
 
-    if day_data.empty:
-        st.info(f"No logs available for {selected_date}.")
+    if day_energy_data.empty:
+        st.info(f"No energy logs available for {selected_date}.")
         return
 
-    # Prepare data for the chart
-    # Normalize time blocks to hours for simplicity (e.g., "6–8 AM" -> 6)
-    day_data["Start Hour"] = day_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
+    # Sleep data for the selected date (filtering based on timestamp)
+    selected_sleep_data = sleep_df[sleep_df["Timestamp"].str.startswith(str(selected_date))]
 
-    # Sort by start hour to ensure correct order
-    day_data = day_data.sort_values(by="Start Hour")
+    # Task data is not date-specific but can be used for visualization
 
-    # Prepare the series data
+    # Prepare Energy Series Data
+    day_energy_data["Start Hour"] = (
+        day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
+    )
     energy_series = [
-        {"time": str(hour), "value": energy}
-        for hour, energy in zip(day_data["Start Hour"], day_data["Energy Level"])
+        {"time": f"{hour}:00", "value": energy}
+        for hour, energy in zip(day_energy_data["Start Hour"], day_energy_data.index)
     ]
 
+    # Prepare Task Weight Data
     task_weight_series = [
-        {"time": str(hour), "value": len(task.split()) if isinstance(task, str) else 0}
-        for hour, task in zip(day_data["Start Hour"], day_data["Task"])
+        {"time": f"{hour}:00", "value": len(task.split()) if isinstance(task, str) else 0}
+        for hour, task in zip(day_energy_data["Start Hour"], day_energy_data["Activity Type"])
     ]
 
-    # Chart options
+    # Prepare Sleep Series Data
+    if not selected_sleep_data.empty:
+        sleep_series = [
+            {
+                "time": f"{start}:00",
+                "value": duration,
+            }
+            for start, duration in zip(
+                selected_sleep_data["Sleep Start"], selected_sleep_data["Duration (hrs)"]
+            )
+        ]
+    else:
+        sleep_series = []
+
+    # Combo Chart Options
     combo_chart_options = {
         "height": 400,
         "rightPriceScale": {
@@ -82,12 +105,41 @@ def view_logs_page(log_data):
         },
     ]
 
-    # Render the combo chart
-    st.subheader("🔋 Energy Levels and Task Weights")
+    if sleep_series:
+        combo_chart_series.append(
+            {
+                "type": "Line",
+                "data": sleep_series,
+                "options": {
+                    "color": "rgba(255, 99, 132, 1)",
+                    "lineWidth": 2,
+                },
+            }
+        )
+
+    # Render Combo Chart
+    st.subheader("🔋 Energy Levels, Task Weights, and Sleep Patterns")
     renderLightweightCharts(
-        [{"chart": combo_chart_options, "series": combo_chart_series}], key="energyTaskChart"
+        [{"chart": combo_chart_options, "series": combo_chart_series}], key="comboChart"
     )
 
-    # Display the raw data table for transparency
+    # Display Detailed Logs
     st.subheader("📋 Detailed Logs")
-    st.dataframe(day_data)
+
+    # Display Energy Logs
+    st.write("**Energy Logs**")
+    st.dataframe(day_energy_data)
+
+    # Display Task Logs
+    st.write("**Task Logs**")
+    if not task_df.empty:
+        st.table(task_df)
+    else:
+        st.info("No task logs recorded.")
+
+    # Display Sleep Logs
+    st.write("**Sleep Logs**")
+    if not selected_sleep_data.empty:
+        st.table(selected_sleep_data)
+    else:
+        st.info("No sleep logs recorded for the selected date.")
