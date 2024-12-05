@@ -1,38 +1,32 @@
 [
     {
-        "Time Block": "6\u20138 AM",
-        "Energy Level": 2,
-        "Task": "Coffe",
-        "Notes": "Hawkar",
+        "Time Block": "6–8 AM",
+        "Energy Level": "Exhausted 😴",
+        "Activity Type": "Coffee Break",
         "Timestamp": "2024-12-05 05:42:09.120773"
     },
     {
-        "Time Block": "6\u20138 AM",
-        "Energy Level": 2,
-        "Task": "Coffe",
-        "Notes": "Hawkar",
-        "Timestamp": "2024-12-05 05:42:09.120773"
-    },
-    {
-        "Time Block": "8\u201310 AM",
-        "Energy Level": 5,
-        "Task": "Driking Coffe",
-        "Notes": "I was ala",
+        "Time Block": "6–8 AM",
+        "Energy Level": "Fatigued 😓",
+        "Activity Type": "Planning",
         "Timestamp": "2024-12-05 05:46:05.791849"
     },
     {
-        "Time Block": "2\u20134 PM",
-        "Energy Level": 9,
-        "Task": "I was doing studying",
-        "Notes": "At that time ",
+        "Time Block": "8–10 AM",
+        "Energy Level": "Balanced 😐",
+        "Activity Type": "Studying",
         "Timestamp": "2024-12-05 05:48:53.848043"
     },
     {
-        "Time Block": "10\u201312 PM",
-        "Energy Level": 7,
-        "Activity Type": "Walking",
-        "Task": "",
-        "Notes": "",
+        "Time Block": "2–4 PM",
+        "Energy Level": "Energized 🚀",
+        "Activity Type": "Workout",
         "Timestamp": "2024-12-05 05:55:40.373154"
+    },
+    {
+        "Time Block": "10–12 PM",
+        "Energy Level": "Recharged 🌟",
+        "Activity Type": "Evening Walk",
+        "Timestamp": "2024-12-05 06:00:00.123456"
     }
 ]
