@@ -30,7 +30,13 @@ def log_energy_page(log_data, save_to_local):
 
     # Step 2: Energy Level Selection with Descriptive Buttons
     st.subheader("2️⃣ How do you feel?")
-    energy_levels = ["Sleepy 😴", "Tired 😓", "Neutral 😐", "Motivated 🚀", "Refreshed 🌟"]
+    energy_levels = [
+    "Exhausted 😴",      # Low energy, feeling drained
+    "Fatigued 😓",       # Slightly higher than exhausted
+    "Balanced 😐",       # Neutral energy, steady state
+    "Energized 🚀",      # Positive, ready to work
+    "Recharged 🌟"       # Fully refreshed and motivated
+    ]
 
     cols = st.columns(len(energy_levels))
     for i, level in enumerate(energy_levels):
