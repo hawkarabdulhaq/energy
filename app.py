@@ -1,6 +1,6 @@
 import streamlit as st
-import os
 import json
+import os
 from log import log_energy_page  # Import the Log Energy page
 from sleep import sleep_page  # Import the Sleep Log page
 from view import view_logs_page  # Import the View Logs page
@@ -24,7 +24,7 @@ def save_local_logs(logs):
         json.dump(logs, file, indent=4)
 
 
-# Initialize session state for navigation and logs
+# Load logs into session state on app start
 if "data" not in st.session_state:
     st.session_state["data"] = load_local_logs()
 
