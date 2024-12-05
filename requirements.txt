@@ -1,3 +1,4 @@
 streamlit
 auth0-python
 requests
+matplotlib
