@@ -4,6 +4,25 @@ import plotly.express as px
 from streamlit_shap import st_shap
 import shap
 
+# Sample Data: Complete one day's log
+sample_log_data = [
+    {"Time Block": "6–8 AM", "Energy Level": 2, "Activity Type": "Coffee Break", "Timestamp": "2024-12-05 05:42:09.120773"},
+    {"Time Block": "6–8 AM", "Energy Level": 3, "Activity Type": "Planning", "Timestamp": "2024-12-05 05:46:05.791849"},
+    {"Time Block": "8–10 AM", "Energy Level": 5, "Activity Type": "Studying", "Timestamp": "2024-12-05 08:10:53.848043"},
+    {"Time Block": "10–12 PM", "Energy Level": 8, "Activity Type": "Brainstorming", "Timestamp": "2024-12-05 10:15:10.456789"},
+    {"Time Block": "12–2 PM", "Energy Level": 9, "Activity Type": "Project Work", "Timestamp": "2024-12-05 12:45:20.789123"},
+    {"Time Block": "2–4 PM", "Energy Level": 7, "Activity Type": "Workout", "Timestamp": "2024-12-05 14:05:40.373154"},
+    {"Time Block": "4–6 PM", "Energy Level": 5, "Activity Type": "Emails & Admin", "Timestamp": "2024-12-05 16:22:33.456123"},
+    {"Time Block": "6–8 PM", "Energy Level": 3, "Activity Type": "Dinner", "Timestamp": "2024-12-05 18:10:12.891234"},
+    {"Time Block": "8–10 PM", "Energy Level": 6, "Activity Type": "Evening Walk", "Timestamp": "2024-12-05 20:05:00.123456"},
+    {"Time Block": "10–12 PM", "Energy Level": 4, "Activity Type": "Reading", "Timestamp": "2024-12-05 22:30:45.789654"}
+]
+
+# Ensure session state contains log data
+if "log_data" not in st.session_state:
+    st.session_state["log_data"] = sample_log_data
+
+# Define the View Logs Page
 def view_logs_page(log_data):
     """Interactive View Logs page."""
     st.title("📊 Explore Your Daily Energy Logs")
@@ -53,46 +72,9 @@ def view_logs_page(log_data):
     )
     st.plotly_chart(fig_beeswarm, use_container_width=True)
 
-    # Waterfall-like Contribution Chart
-    st.subheader("📊 Energy Level Contribution")
-    contribution_df = (
-        day_data.groupby("Activity Type")["Energy Level"]
-        .mean()
-        .reset_index()
-        .sort_values(by="Energy Level", ascending=False)
-    )
-    contribution_df["Cumulative"] = contribution_df["Energy Level"].cumsum()
-
-    fig_waterfall = px.bar(
-        contribution_df,
-        x="Activity Type",
-        y="Energy Level",
-        text="Energy Level",
-        title="Activity Contribution to Energy Levels",
-    )
-    st.plotly_chart(fig_waterfall, use_container_width=True)
-
-    # Interactive Force Plot for Each Entry (SHAP-like visualization)
-    st.subheader("💡 Detailed Insights for Each Entry")
-    selected_entry_idx = st.selectbox("Select an entry to view details", day_data.index, format_func=lambda idx: f"Entry {idx + 1}")
-    selected_entry = day_data.loc[selected_entry_idx]
-
-    st.write(f"**Entry Details:**")
-    st.json(selected_entry.to_dict(), expanded=True)
-
-    # Simplified SHAP-like visualization (using dummy placeholders for SHAP)
-    st.write("🔍 Energy Contributions (Simplified Visualization)")
-    st_shap(
-        shap.plots.waterfall(
-            shap.Explanation(
-                values=[selected_entry["Energy Level"]],
-                base_values=selected_entry["Energy Level"] / 2,
-                data=dict(selected_entry),
-            )
-        ),
-        height=300,
-    )
-
     # Display Detailed Data Table
     st.subheader("📋 Detailed Logs")
     st.dataframe(day_data)
+
+# Call the View Logs Page with session data
+view_logs_page(st.session_state["log_data"])
