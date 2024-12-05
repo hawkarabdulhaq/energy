@@ -1,8 +1,31 @@
 import streamlit as st
+import os
+import json
+
+# Path to the tasks JSON file
+TASKS_JSON_FILE = "database/task.json"
+
+# Helper Functions
+def load_tasks():
+    """Load tasks from the task.json file."""
+    if os.path.exists(TASKS_JSON_FILE):
+        with open(TASKS_JSON_FILE, "r") as file:
+            return json.load(file)
+    return []
+
+def save_tasks_to_file(tasks):
+    """Save tasks to the task.json file."""
+    os.makedirs(os.path.dirname(TASKS_JSON_FILE), exist_ok=True)
+    with open(TASKS_JSON_FILE, "w") as file:
+        json.dump(tasks, file, indent=4)
 
 def task_page():
     """Task Management Page."""
     st.title("📝 Task Management")
+
+    # Load tasks from file into session state if not already loaded
+    if "tasks" not in st.session_state:
+        st.session_state["tasks"] = load_tasks()
 
     # Step 1: Select Task Type
     st.subheader("1️⃣ Select Task Type")
@@ -34,18 +57,24 @@ def task_page():
 
     # Save Task Button
     if st.button("Save Task", key="save_task"):
-        if "tasks" not in st.session_state:
-            st.session_state["tasks"] = []
-
         if selected_task_type and selected_task_length:
             new_task = {
                 "Task Type": selected_task_type,
                 "Task Length": selected_task_length,
             }
             st.session_state["tasks"].append(new_task)
-            st.success("✅ Task saved successfully!")
+            save_tasks_to_file(st.session_state["tasks"])
+            st.success("✅ Task saved successfully! Add a new task.")
             # Reset selected task type and length
             st.session_state["selected_task_type"] = None
             st.session_state["selected_task_length"] = None
         else:
             st.error("❌ Please select both a task type and a task length before saving.")
+
+    # Display Saved Tasks
+    st.subheader("📋 Saved Tasks")
+    if st.session_state["tasks"]:
+        for idx, task in enumerate(st.session_state["tasks"], start=1):
+            st.write(f"{idx}. **{task['Task Type']}** ({task['Task Length']})")
+    else:
+        st.info("No tasks saved yet.")
