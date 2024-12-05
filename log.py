@@ -2,15 +2,16 @@ import streamlit as st
 import datetime
 from activity import get_activity_types  # Import activity types from activity.py
 
+
 # Helper Functions
-def save_log(log_entry, log_data, save_to_local):
-    """Save a single log entry."""
+def save_log_to_github(log_entry, log_data, save_to_github):
+    """Save a single log entry to GitHub."""
     log_data.append(log_entry)
-    save_to_local(log_data)
+    save_to_github(log_data)  # Use GitHub integration for saving
     return log_data
 
 
-def log_energy_page(log_data, save_to_local):
+def log_energy_page(log_data, save_to_github):
     """Log Energy page logic."""
     st.header("Log Your Energy Levels")
 
@@ -31,11 +32,11 @@ def log_energy_page(log_data, save_to_local):
     # Step 2: Energy Level Selection with Descriptive Buttons
     st.subheader("2️⃣ How do you feel?")
     energy_levels = [
-    "Exhausted 😴",      # Low energy, feeling drained
-    "Fatigued 😓",       # Slightly higher than exhausted
-    "Balanced 😐",       # Neutral energy, steady state
-    "Energized 🚀",      # Positive, ready to work
-    "Recharged 🌟"       # Fully refreshed and motivated
+        "Exhausted 😴",  # Low energy, feeling drained
+        "Fatigued 😓",   # Slightly higher than exhausted
+        "Balanced 😐",   # Neutral energy, steady state
+        "Energized 🚀",  # Positive, ready to work
+        "Recharged 🌟"   # Fully refreshed and motivated
     ]
 
     cols = st.columns(len(energy_levels))
@@ -64,14 +65,18 @@ def log_energy_page(log_data, save_to_local):
 
     # Save Entry Button
     if st.button("Save Entry"):
-        if st.session_state.get("selected_block") and st.session_state.get("selected_energy_level") and st.session_state.get("selected_activity"):
+        if (
+            st.session_state.get("selected_block") and
+            st.session_state.get("selected_energy_level") and
+            st.session_state.get("selected_activity")
+        ):
             new_entry = {
                 "Time Block": st.session_state["selected_block"],
                 "Energy Level": st.session_state["selected_energy_level"],
                 "Activity Type": st.session_state["selected_activity"],
                 "Timestamp": str(datetime.datetime.now()),
             }
-            save_log(new_entry, log_data, save_to_local)
+            save_log_to_github(new_entry, log_data, save_to_github)
             st.success("🚀 Entry saved successfully!")
             # Reset selections
             st.session_state["selected_block"] = None
