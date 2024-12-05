@@ -50,6 +50,13 @@ def save_task(task_entry, task_data):
     st.write(f"DEBUG: Task list after adding: {task_data}")
     return task_data
 
+def clean_invalid_tasks(task_data):
+    """Remove tasks with invalid data."""
+    return [
+        task for task in task_data
+        if task.get("Task Type") is not None and task.get("Task Length") is not None
+    ]
+
 # Task Management Page
 def task_page():
     """Task Management Page."""
@@ -58,7 +65,7 @@ def task_page():
     # Load tasks into session state if not already loaded
     if "tasks" not in st.session_state:
         st.write("DEBUG: Loading tasks into session state...")
-        st.session_state["tasks"] = load_tasks()
+        st.session_state["tasks"] = clean_invalid_tasks(load_tasks())
 
     # Step 1: Select Task Type
     st.subheader("1️⃣ Select Task Type")
@@ -93,7 +100,7 @@ def task_page():
         if "tasks" not in st.session_state:
             st.session_state["tasks"] = []
 
-        if "selected_task_type" in st.session_state and "selected_task_length" in st.session_state:
+        if st.session_state.get("selected_task_type") and st.session_state.get("selected_task_length"):
             new_task = {
                 "Task Type": st.session_state["selected_task_type"],
                 "Task Length": st.session_state["selected_task_length"],
@@ -106,6 +113,7 @@ def task_page():
             st.session_state["selected_task_length"] = None
         else:
             st.error("❌ Please select both a task type and a task length before saving.")
+            st.write("DEBUG: Attempted to save a task without valid selections.")
 
     # Display Saved Tasks
     st.subheader("📋 Saved Tasks")
