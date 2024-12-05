@@ -26,6 +26,9 @@ st.title("Energy Log App")
 if "data" not in st.session_state:
     st.session_state["data"] = []  # Load from local DB on start
 
+if "selected_activity" not in st.session_state:
+    st.session_state["selected_activity"] = None
+
 
 # Load local database
 def load_local_logs():
@@ -102,11 +105,20 @@ if st.session_state["page"] == "Log Energy":
     st.subheader("Energy Level")
     energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
 
-    # Activity Type Input
+    # Activity Type Input with Buttons
     st.subheader("Select Activity Type")
     activity_categories = get_activity_types()  # Fetch activity categories
-    activity_types = [activity for category in activity_categories.values() for activity in category]  # Flatten the list
-    selected_activity = st.selectbox("Activity", activity_types)
+
+    for category, activities in activity_categories.items():
+        st.write(f"**{category}**")
+        cols = st.columns(len(activities))
+        for i, activity in enumerate(activities):
+            if cols[i].button(activity):
+                st.session_state["selected_activity"] = activity
+
+    # Display the selected activity
+    if st.session_state["selected_activity"]:
+        st.write(f"**Selected Activity:** {st.session_state['selected_activity']}")
 
     # Custom Task Input (Optional)
     task = st.text_input("Additional Details for Activity (Optional)")
@@ -117,11 +129,11 @@ if st.session_state["page"] == "Log Energy":
 
     # Button to save log
     if st.button("Save Entry"):
-        if st.session_state["selected_block"]:
+        if st.session_state["selected_block"] and st.session_state["selected_activity"]:
             new_entry = {
                 "Time Block": st.session_state["selected_block"],
                 "Energy Level": energy_level,
-                "Activity Type": selected_activity,
+                "Activity Type": st.session_state["selected_activity"],
                 "Task": task,
                 "Notes": notes,
                 "Timestamp": str(datetime.datetime.now())
@@ -131,8 +143,9 @@ if st.session_state["page"] == "Log Energy":
             push_logs_to_github(st.session_state["data"])  # Auto-sync to GitHub
             st.success("Entry saved and synced to GitHub!")
             st.session_state["selected_block"] = None  # Reset selected block
+            st.session_state["selected_activity"] = None  # Reset selected activity
         else:
-            st.error("Please select a time block before saving.")
+            st.error("Please select both a time block and an activity before saving.")
 
 # Page: View Logs
 elif st.session_state["page"] == "View Logs":
