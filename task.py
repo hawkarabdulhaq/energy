@@ -1,43 +1,57 @@
 import streamlit as st
-import os
+import requests
 import json
 
-# Path to the tasks JSON file
-TASKS_JSON_FILE = "database/task.json"
+# GitHub Configuration
+GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
+TASKS_FILE_PATH = "database/task.json"  # Path to the task file in the repo
+HEADERS = {
+    "Authorization": f"token {st.secrets['github_pat']}",
+    "Accept": "application/vnd.github.v3+json",
+}
 
 # Helper Functions
-def load_tasks():
-    """Load tasks from the task.json file."""
+def load_tasks_from_github():
+    """Load tasks from the GitHub repository."""
     try:
-        if os.path.exists(TASKS_JSON_FILE):
-            st.write(f"DEBUG: Loading tasks from {TASKS_JSON_FILE}")
-            with open(TASKS_JSON_FILE, "r") as file:
-                return json.load(file)
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{TASKS_FILE_PATH}"
+        response = requests.get(url, headers=HEADERS)
+
+        if response.status_code == 200:
+            content = response.json().get("content", "")
+            return json.loads(base64.b64decode(content).decode("utf-8"))
+        elif response.status_code == 404:
+            st.warning("No tasks found in the GitHub repository. Initializing empty tasks.")
+            return []
         else:
-            st.write(f"DEBUG: {TASKS_JSON_FILE} does not exist. Returning an empty list.")
+            st.error(f"Error loading tasks from GitHub: {response.status_code}")
             return []
     except Exception as e:
         st.error(f"Error loading tasks: {e}")
         return []
 
-def save_to_local(tasks):
-    """Save tasks to the task.json file with enhanced debugging."""
+
+def save_tasks_to_github(tasks):
+    """Save tasks to the GitHub repository."""
     try:
-        st.write("DEBUG: Saving tasks to file...")
-        os.makedirs(os.path.dirname(TASKS_JSON_FILE), exist_ok=True)
-        with open(TASKS_JSON_FILE, "w") as file:
-            json.dump(tasks, file, indent=4)
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{TASKS_FILE_PATH}"
+        response = requests.get(url, headers=HEADERS)
+        sha = response.json().get("sha", None) if response.status_code == 200 else None
 
-        # Check if the file exists and display its contents
-        if os.path.exists(TASKS_JSON_FILE):
-            st.write(f"DEBUG: {TASKS_JSON_FILE} exists.")
-            with open(TASKS_JSON_FILE, "r") as file:
-                saved_data = json.load(file)
-                st.write(f"DEBUG: Content of {TASKS_JSON_FILE}: {saved_data}")
+        # Prepare payload
+        payload = {
+            "message": f"Update tasks - {len(tasks)} entries",
+            "content": base64.b64encode(json.dumps(tasks).encode("utf-8")).decode("utf-8"),
+        }
+        if sha:
+            payload["sha"] = sha  # Include SHA if the file exists
+
+        # Send the request
+        put_response = requests.put(url, headers=HEADERS, json=payload)
+        if put_response.status_code in [200, 201]:
+            st.success("Tasks successfully saved to GitHub!")
         else:
-            st.error(f"DEBUG: {TASKS_JSON_FILE} was not created.")
-
-        st.write("DEBUG: Tasks saved successfully.")
+            st.error(f"Error saving tasks to GitHub: {put_response.status_code}")
     except Exception as e:
         st.error(f"Error saving tasks: {e}")
 
@@ -46,9 +60,10 @@ def save_task(task_entry, task_data):
     """Save a single task entry."""
     st.write(f"DEBUG: Adding task: {task_entry}")
     task_data.append(task_entry)
-    save_to_local(task_data)
+    save_tasks_to_github(task_data)
     st.write(f"DEBUG: Task list after adding: {task_data}")
     return task_data
+
 
 def clean_invalid_tasks(task_data):
     """Remove tasks with invalid data."""
@@ -57,6 +72,7 @@ def clean_invalid_tasks(task_data):
         if task.get("Task Type") is not None and task.get("Task Length") is not None
     ]
 
+
 # Task Management Page
 def task_page():
     """Task Management Page."""
@@ -64,8 +80,8 @@ def task_page():
 
     # Load tasks into session state if not already loaded
     if "tasks" not in st.session_state:
-        st.write("DEBUG: Loading tasks into session state...")
-        st.session_state["tasks"] = clean_invalid_tasks(load_tasks())
+        st.write("DEBUG: Loading tasks into session state from GitHub...")
+        st.session_state["tasks"] = clean_invalid_tasks(load_tasks_from_github())
 
     # Step 1: Select Task Type
     st.subheader("1️⃣ Select Task Type")
@@ -106,7 +122,7 @@ def task_page():
                 "Task Length": st.session_state["selected_task_length"],
             }
             st.write(f"DEBUG: New task to save: {new_task}")
-            save_task(new_task, st.session_state["tasks"])  # Save task to JSON
+            save_task(new_task, st.session_state["tasks"])  # Save task to GitHub
             st.success("✅ Task saved successfully! Add a new task.")
             # Reset session state for a new task
             st.session_state["selected_task_type"] = None
@@ -122,3 +138,4 @@ def task_page():
             st.write(f"{idx}. **{task['Task Type']}** ({task['Task Length']})")
     else:
         st.info("No tasks saved yet.")
+
