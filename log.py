@@ -28,9 +28,18 @@ def log_energy_page(log_data, save_to_local):
     if st.session_state.get("selected_block"):
         st.write(f"✅ **Selected Time Block:** {st.session_state['selected_block']}")
 
-    # Step 2: Energy Level Slider
-    st.subheader("2️⃣ Rate Your Energy Level")
-    energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
+    # Step 2: Energy Level Selection with Descriptive Buttons
+    st.subheader("2️⃣ How do you feel?")
+    energy_levels = ["Sleepy 😴", "Tired 😓", "Neutral 😐", "Motivated 🚀", "Refreshed 🌟"]
+
+    cols = st.columns(len(energy_levels))
+    for i, level in enumerate(energy_levels):
+        if cols[i].button(level, key=f"energy_{level}"):
+            st.session_state["selected_energy_level"] = level
+
+    # Show selected energy level
+    if st.session_state.get("selected_energy_level"):
+        st.write(f"✅ **Selected Energy Level:** {st.session_state['selected_energy_level']}")
 
     # Step 3: Activity Type Selection
     st.subheader("3️⃣ Select Activity Type")
@@ -49,10 +58,10 @@ def log_energy_page(log_data, save_to_local):
 
     # Save Entry Button
     if st.button("Save Entry"):
-        if st.session_state.get("selected_block") and st.session_state.get("selected_activity"):
+        if st.session_state.get("selected_block") and st.session_state.get("selected_energy_level") and st.session_state.get("selected_activity"):
             new_entry = {
                 "Time Block": st.session_state["selected_block"],
-                "Energy Level": energy_level,
+                "Energy Level": st.session_state["selected_energy_level"],
                 "Activity Type": st.session_state["selected_activity"],
                 "Timestamp": str(datetime.datetime.now()),
             }
@@ -60,6 +69,7 @@ def log_energy_page(log_data, save_to_local):
             st.success("🚀 Entry saved successfully!")
             # Reset selections
             st.session_state["selected_block"] = None
+            st.session_state["selected_energy_level"] = None
             st.session_state["selected_activity"] = None
         else:
-            st.error("❌ Please select both a time block and an activity before saving.")
+            st.error("❌ Please select a time block, energy level, and activity before saving.")
