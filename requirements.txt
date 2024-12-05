@@ -3,5 +3,4 @@ auth0-python
 requests
 matplotlib
 plotly
-streamlit-shap
-shap
+streamlit-lightweight-charts
