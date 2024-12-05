@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+import base64  # Ensure base64 is imported
 
 # GitHub Configuration
 GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
@@ -138,4 +139,3 @@ def task_page():
             st.write(f"{idx}. **{task['Task Type']}** ({task['Task Length']})")
     else:
         st.info("No tasks saved yet.")
-
