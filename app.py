@@ -4,19 +4,23 @@ import pandas as pd
 # App Title
 st.title("Energy Log App")
 
-# Initialize session state for storing logs
+# Initialize session state for storing logs and navigation
 if "data" not in st.session_state:
     st.session_state["data"] = []
-
+if "page" not in st.session_state:
+    st.session_state["page"] = "Log Energy"  # Default page
 if "selected_block" not in st.session_state:
     st.session_state["selected_block"] = None
 
-# Sidebar for Navigation
+# Sidebar for Navigation with Buttons
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Log Energy", "View Logs"])
+if st.sidebar.button("Log Energy"):
+    st.session_state["page"] = "Log Energy"
+if st.sidebar.button("View Logs"):
+    st.session_state["page"] = "View Logs"
 
-# Page 1: Log Energy
-if page == "Log Energy":
+# Page: Log Energy
+if st.session_state["page"] == "Log Energy":
     st.header("Log Your Energy Levels")
 
     # Time Block Selection as Buttons
@@ -62,8 +66,8 @@ if page == "Log Energy":
         else:
             st.error("Please select a time block before saving.")
 
-# Page 2: View Logs
-if page == "View Logs":
+# Page: View Logs
+elif st.session_state["page"] == "View Logs":
     st.header("Your Logged Entries")
 
     # Display logs if available
