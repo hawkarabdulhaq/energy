@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.express as px
 
 def view_logs_page(log_data):
@@ -14,16 +13,19 @@ def view_logs_page(log_data):
     # Convert log data to DataFrame
     df = pd.DataFrame(log_data)
 
-    # Bar Chart: Energy Levels by Time Block
-    st.subheader("🔋 Energy Levels by Time Block")
-    energy_by_time = df.groupby("Time Block")["Energy Level"].mean().reset_index()
+    # Bar Chart: Frequency of Energy Levels
+    st.subheader("🔋 Frequency of Energy Levels")
+    energy_counts = df["Energy Level"].value_counts().reset_index()
+    energy_counts.columns = ["Energy Level", "Count"]
     fig_bar = px.bar(
-        energy_by_time,
-        x="Time Block",
-        y="Energy Level",
-        title="Average Energy Levels by Time Block",
-        labels={"Energy Level": "Average Energy Level", "Time Block": "Time Block"},
+        energy_counts,
+        x="Energy Level",
+        y="Count",
+        title="Frequency of Energy Levels",
+        labels={"Count": "Frequency", "Energy Level": "Energy Level"},
+        text="Count"
     )
+    fig_bar.update_traces(textposition='outside')
     st.plotly_chart(fig_bar, use_container_width=True)
 
     # Pie Chart: Activity Distribution
@@ -46,12 +48,12 @@ def view_logs_page(log_data):
     st.subheader("⏱️ Energy Levels Throughout the Day")
     if "Timestamp" in df.columns:
         df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-        timeline_fig = px.line(
+        timeline_fig = px.scatter(
             df.sort_values("Timestamp"),
             x="Timestamp",
             y="Energy Level",
+            color="Energy Level",
             title="Energy Levels Over Time",
-            markers=True,
             labels={"Energy Level": "Energy Level", "Timestamp": "Time"},
         )
         st.plotly_chart(timeline_fig, use_container_width=True)
