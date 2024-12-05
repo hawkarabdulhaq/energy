@@ -37,23 +37,23 @@ if "page" not in st.session_state:
 st.sidebar.title("Navigation")
 if st.sidebar.button("Log Energy"):
     st.session_state["page"] = "Log Energy"
-if st.sidebar.button("View Logs"):
-    st.session_state["page"] = "View Logs"
-if st.sidebar.button("Sleep Log"):
-    st.session_state["page"] = "Sleep Log"
-if st.sidebar.button("Task Management"):
-    st.session_state["page"] = "Task Management"
+if st.sidebar.button("Log Sleep"):
+    st.session_state["page"] = "Log Sleep"
+if st.sidebar.button("Log Tasks"):
+    st.session_state["page"] = "Log Tasks"
+if st.sidebar.button("View Your Energy"):
+    st.session_state["page"] = "View Your Energy"
 
 
 # Page Routing
 if st.session_state["page"] == "Log Energy":
     log_energy_page(st.session_state["data"], save_local_logs)
 
-elif st.session_state["page"] == "View Logs":
-    view_logs_page(st.session_state["data"])
-
-elif st.session_state["page"] == "Sleep Log":
+elif st.session_state["page"] == "Log Sleep":
     sleep_page()
 
-elif st.session_state["page"] == "Task Management":
+elif st.session_state["page"] == "Log Tasks":
     task_page()
+
+elif st.session_state["page"] == "View Your Energy":
+    view_logs_page(st.session_state["data"])
