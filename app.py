@@ -1,9 +1,9 @@
 import streamlit as st
-import pandas as pd
-import json
 import os
+import json
 from log import log_energy_page  # Import the Log Energy page
 from sleep import sleep_page  # Import the Sleep Log page
+from view import view_logs_page  # Import the View Logs page
 
 # Local Database Configuration
 LOCAL_DB_FILE = "local_logs.json"  # Local database file
@@ -24,7 +24,7 @@ def save_local_logs(logs):
         json.dump(logs, file, indent=4)
 
 
-# Load logs into session state on app start
+# Initialize session state for navigation and logs
 if "data" not in st.session_state:
     st.session_state["data"] = load_local_logs()
 
@@ -47,14 +47,7 @@ if st.session_state["page"] == "Log Energy":
     log_energy_page(st.session_state["data"], save_local_logs)
 
 elif st.session_state["page"] == "View Logs":
-    st.header("📊 Your Logged Entries")
-
-    # Display logs in a table
-    if st.session_state["data"]:
-        df = pd.DataFrame(st.session_state["data"])
-        st.dataframe(df)
-    else:
-        st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+    view_logs_page(st.session_state["data"])
 
 elif st.session_state["page"] == "Sleep Log":
     sleep_page()
