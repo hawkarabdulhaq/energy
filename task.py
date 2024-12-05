@@ -8,21 +8,35 @@ TASKS_JSON_FILE = "database/task.json"
 # Helper Functions
 def load_tasks():
     """Load tasks from the task.json file."""
-    if os.path.exists(TASKS_JSON_FILE):
-        with open(TASKS_JSON_FILE, "r") as file:
-            return json.load(file)
-    return []
+    try:
+        if os.path.exists(TASKS_JSON_FILE):
+            st.write(f"DEBUG: Loading tasks from {TASKS_JSON_FILE}")
+            with open(TASKS_JSON_FILE, "r") as file:
+                return json.load(file)
+        else:
+            st.write(f"DEBUG: {TASKS_JSON_FILE} does not exist. Returning an empty list.")
+            return []
+    except Exception as e:
+        st.error(f"Error loading tasks: {e}")
+        return []
 
 def save_to_local(tasks):
     """Save tasks to the task.json file."""
-    os.makedirs(os.path.dirname(TASKS_JSON_FILE), exist_ok=True)
-    with open(TASKS_JSON_FILE, "w") as file:
-        json.dump(tasks, file, indent=4)
+    try:
+        st.write("DEBUG: Saving tasks to file...")
+        os.makedirs(os.path.dirname(TASKS_JSON_FILE), exist_ok=True)
+        with open(TASKS_JSON_FILE, "w") as file:
+            json.dump(tasks, file, indent=4)
+        st.write("DEBUG: Tasks saved successfully.")
+    except Exception as e:
+        st.error(f"Error saving tasks: {e}")
 
 def save_task(task_entry, task_data):
     """Save a single task entry."""
+    st.write(f"DEBUG: Adding task: {task_entry}")
     task_data.append(task_entry)
     save_to_local(task_data)
+    st.write(f"DEBUG: Task list after adding: {task_data}")
     return task_data
 
 # Task Management Page
@@ -32,13 +46,12 @@ def task_page():
 
     # Load tasks into session state if not already loaded
     if "tasks" not in st.session_state:
+        st.write("DEBUG: Loading tasks into session state...")
         st.session_state["tasks"] = load_tasks()
 
     # Step 1: Select Task Type
     st.subheader("1️⃣ Select Task Type")
     task_types = ["Data Processing", "Writing", "Analysis", "Meeting", "Coding", "Design"]
-    selected_task_type = None
-
     cols = st.columns(len(task_types))
     for i, task_type in enumerate(task_types):
         if cols[i].button(task_type, key=f"task_type_{task_type}"):
@@ -47,12 +60,12 @@ def task_page():
     if "selected_task_type" in st.session_state:
         selected_task_type = st.session_state["selected_task_type"]
         st.write(f"✅ **Selected Task Type:** {selected_task_type}")
+    else:
+        st.write("DEBUG: No task type selected yet.")
 
     # Step 2: Select Task Length
     st.subheader("2️⃣ Select Task Length")
     task_lengths = ["Full Day Task", "Half Day Task", "Few Hours Task", "Less than 1 Hour"]
-    selected_task_length = None
-
     cols = st.columns(len(task_lengths))
     for i, task_length in enumerate(task_lengths):
         if cols[i].button(task_length, key=f"task_length_{task_length}"):
@@ -61,17 +74,20 @@ def task_page():
     if "selected_task_length" in st.session_state:
         selected_task_length = st.session_state["selected_task_length"]
         st.write(f"✅ **Selected Task Length:** {selected_task_length}")
+    else:
+        st.write("DEBUG: No task length selected yet.")
 
     # Save Task Button
     if st.button("Save Task", key="save_task"):
         if "tasks" not in st.session_state:
             st.session_state["tasks"] = []
 
-        if selected_task_type and selected_task_length:
+        if "selected_task_type" in st.session_state and "selected_task_length" in st.session_state:
             new_task = {
-                "Task Type": selected_task_type,
-                "Task Length": selected_task_length,
+                "Task Type": st.session_state["selected_task_type"],
+                "Task Length": st.session_state["selected_task_length"],
             }
+            st.write(f"DEBUG: New task to save: {new_task}")
             save_task(new_task, st.session_state["tasks"])  # Save task to JSON
             st.success("✅ Task saved successfully! Add a new task.")
             # Reset session state for a new task
