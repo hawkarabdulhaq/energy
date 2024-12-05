@@ -1,11 +1,10 @@
 import streamlit as st
-import pandas as pd
-import requests
 import json
-import datetime
-import base64
 import os
-from activity import get_activity_types  # Import activity types from activity.py
+import base64
+import pandas as pd
+import datetime
+from log import log_energy_page  # Import the Log Energy page
 from sleep import sleep_page  # Import the Sleep Log page
 
 # GitHub Configuration
@@ -19,20 +18,6 @@ HEADERS = {
 
 # Local Database Configuration
 LOCAL_DB_FILE = "local_logs.json"  # Local database file
-
-# App Title
-st.set_page_config(page_title="Energy Log App", layout="wide")
-st.title("Energy Log App")
-
-# Initialize session state
-if "data" not in st.session_state:
-    st.session_state["data"] = []  # Load from local DB on start
-
-if "selected_activity" not in st.session_state:
-    st.session_state["selected_activity"] = None
-
-if "selected_block" not in st.session_state:
-    st.session_state["selected_block"] = None
 
 
 # Helper Functions
@@ -73,7 +58,7 @@ def push_logs_to_github(logs):
 
 
 # Load logs into session state on app start
-if not st.session_state["data"]:
+if "data" not in st.session_state:
     st.session_state["data"] = load_local_logs()
 
 
@@ -87,81 +72,19 @@ if st.sidebar.button("Sleep Log"):
     st.session_state["page"] = "Sleep Log"
 
 
-# Log Energy Page
-if st.session_state["page"] == "Log Energy":
-    st.header("Log Your Energy Levels")
+# Page Routing
+if st.session_state.get("page") == "Log Energy":
+    log_energy_page(st.session_state["data"], save_local_logs)
 
-    # Time Block Selection as Buttons
-    st.subheader("Select Time Block")
-    time_blocks = ["6–8 AM", "8–10 AM", "10–12 PM", "12–2 PM", "2–4 PM", "4–6 PM", "6–8 PM"]
-
-    # Create buttons for time blocks
-    cols = st.columns(len(time_blocks))
-    for i, block in enumerate(time_blocks):
-        if cols[i].button(block):
-            st.session_state["selected_block"] = block
-
-    # Display the selected time block
-    if st.session_state["selected_block"]:
-        st.write(f"**Selected Time Block:** {st.session_state['selected_block']}")
-
-    # Energy Level Input
-    st.subheader("Energy Level")
-    energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
-
-    # Activity Type Input with Buttons
-    st.subheader("Select Activity Type")
-    activity_categories = get_activity_types()  # Fetch activity categories
-
-    for category, activities in activity_categories.items():
-        st.write(f"**{category}**")
-        cols = st.columns(len(activities))
-        for i, activity in enumerate(activities):
-            if cols[i].button(activity):
-                st.session_state["selected_activity"] = activity
-
-    # Display the selected activity
-    if st.session_state["selected_activity"]:
-        st.write(f"**Selected Activity:** {st.session_state['selected_activity']}")
-
-    # Custom Task Input (Optional)
-    task = st.text_input("Additional Details for Activity (Optional)")
-
-    # Notes Input
-    st.subheader("Notes")
-    notes = st.text_area("Additional Notes (optional)")
-
-    # Button to save log
-    if st.button("Save Entry"):
-        if st.session_state["selected_block"] and st.session_state["selected_activity"]:
-            new_entry = {
-                "Time Block": st.session_state["selected_block"],
-                "Energy Level": energy_level,
-                "Activity Type": st.session_state["selected_activity"],
-                "Task": task,
-                "Notes": notes,
-                "Timestamp": str(datetime.datetime.now())
-            }
-            st.session_state["data"].append(new_entry)
-            save_local_logs(st.session_state["data"])  # Save to local DB
-            push_logs_to_github(st.session_state["data"])  # Auto-sync to GitHub
-            st.success("Entry saved and synced to GitHub!")
-            st.session_state["selected_block"] = None  # Reset selected block
-            st.session_state["selected_activity"] = None  # Reset selected activity
-        else:
-            st.error("Please select both a time block and an activity before saving.")
-
-# View Logs Page
-elif st.session_state["page"] == "View Logs":
-    st.header("Your Logged Entries")
+elif st.session_state.get("page") == "View Logs":
+    st.header("📊 Your Logged Entries")
 
     # Display logs in a table
     if st.session_state["data"]:
         df = pd.DataFrame(st.session_state["data"])
         st.dataframe(df)
     else:
-        st.warning("No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+        st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
 
-# Sleep Log Page
-elif st.session_state["page"] == "Sleep Log":
+elif st.session_state.get("page") == "Sleep Log":
     sleep_page()
