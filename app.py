@@ -1,23 +1,82 @@
 import streamlit as st
 import pandas as pd
+import requests
+import json
+import datetime
+
+# GitHub Configuration
+GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
+GITHUB_FILE_PATH = "database/energy_logs.json"  # Path to the file in your repo
+GITHUB_PAT = st.secrets["github_pat"]  # Access GitHub PAT from secrets.toml
+HEADERS = {
+    "Authorization": f"token {GITHUB_PAT}",
+    "Accept": "application/vnd.github.v3+json",
+}
 
 # App Title
 st.title("Energy Log App")
 
-# Initialize session state for storing logs and navigation
+# Initialize session state
 if "data" not in st.session_state:
     st.session_state["data"] = []
+
 if "page" not in st.session_state:
-    st.session_state["page"] = "Log Energy"  # Default page
+    st.session_state["page"] = "Log Energy"
+
 if "selected_block" not in st.session_state:
     st.session_state["selected_block"] = None
 
-# Sidebar for Navigation with Buttons
+# Sidebar Navigation
 st.sidebar.title("Navigation")
 if st.sidebar.button("Log Energy"):
     st.session_state["page"] = "Log Energy"
 if st.sidebar.button("View Logs"):
     st.session_state["page"] = "View Logs"
+if st.sidebar.button("Push to GitHub"):
+    st.session_state["page"] = "Push to GitHub"
+
+# Function to fetch logs from GitHub
+def fetch_logs_from_github():
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
+    response = requests.get(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        content = json.loads(
+            requests.get(response.json()["download_url"]).text
+        )  # Decode file content
+        return content
+    elif response.status_code == 404:
+        st.warning("No logs found in the GitHub repository.")
+        return []
+    else:
+        st.error("Error fetching logs from GitHub.")
+        return []
+
+# Function to push logs to GitHub
+def push_logs_to_github(logs):
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
+    response = requests.get(url, headers=HEADERS)
+    sha = None
+
+    if response.status_code == 200:  # File exists, fetch SHA for updating
+        sha = response.json()["sha"]
+
+    # Create commit message and content
+    commit_message = f"Update energy logs - {datetime.datetime.now()}"
+    content = json.dumps(logs, indent=4).encode("utf-8").decode("utf-8")
+    payload = {
+        "message": commit_message,
+        "content": content.encode("utf-8").decode("base64"),  # Base64 encoding
+    }
+    if sha:
+        payload["sha"] = sha  # Add SHA for updates
+
+    # Push data to GitHub
+    push_response = requests.put(url, headers=HEADERS, data=json.dumps(payload))
+    if push_response.status_code in [200, 201]:
+        st.success("Logs pushed to GitHub successfully!")
+    else:
+        st.error("Error pushing logs to GitHub.")
 
 # Page: Log Energy
 if st.session_state["page"] == "Log Energy":
@@ -52,17 +111,15 @@ if st.session_state["page"] == "Log Energy":
     # Button to save log
     if st.button("Save Entry"):
         if st.session_state["selected_block"]:
-            # Append the entry to session state
             st.session_state["data"].append({
                 "Time Block": st.session_state["selected_block"],
                 "Energy Level": energy_level,
                 "Task": task,
-                "Notes": notes
+                "Notes": notes,
+                "Timestamp": str(datetime.datetime.now())
             })
             st.success("Entry saved!")
-            # Reset selected block for a fresh start
-            st.session_state["selected_block"] = None
-            st.experimental_rerun()
+            st.session_state["selected_block"] = None  # Reset selected block
         else:
             st.error("Please select a time block before saving.")
 
@@ -76,3 +133,18 @@ elif st.session_state["page"] == "View Logs":
         st.dataframe(df)
     else:
         st.write("No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+
+# Page: Push to GitHub
+elif st.session_state["page"] == "Push to GitHub":
+    st.header("Push Your Logs to GitHub")
+
+    if st.button("Fetch Existing Logs"):
+        existing_logs = fetch_logs_from_github()
+        st.session_state["data"] = existing_logs + st.session_state["data"]
+        st.success("Fetched and merged logs from GitHub!")
+
+    if st.button("Push Logs to GitHub"):
+        if st.session_state["data"]:
+            push_logs_to_github(st.session_state["data"])
+        else:
+            st.warning("No logs to push!")
