@@ -28,19 +28,25 @@ def save_local_logs(logs):
 if "data" not in st.session_state:
     st.session_state["data"] = load_local_logs()
 
+if "page" not in st.session_state:
+    st.session_state["page"] = "Log Energy"  # Default page
 
-# Sidebar Navigation (Radio Button for Simplicity)
+
+# Sidebar Navigation with Buttons
 st.sidebar.title("Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Log Energy", "View Logs", "Sleep Log"]
-)
+if st.sidebar.button("Log Energy"):
+    st.session_state["page"] = "Log Energy"
+if st.sidebar.button("View Logs"):
+    st.session_state["page"] = "View Logs"
+if st.sidebar.button("Sleep Log"):
+    st.session_state["page"] = "Sleep Log"
+
 
 # Page Routing
-if page == "Log Energy":
+if st.session_state["page"] == "Log Energy":
     log_energy_page(st.session_state["data"], save_local_logs)
 
-elif page == "View Logs":
+elif st.session_state["page"] == "View Logs":
     st.header("📊 Your Logged Entries")
 
     # Display logs in a table
@@ -50,5 +56,5 @@ elif page == "View Logs":
     else:
         st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
 
-elif page == "Sleep Log":
+elif st.session_state["page"] == "Sleep Log":
     sleep_page()
