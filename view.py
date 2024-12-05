@@ -42,14 +42,14 @@ def view_logs_page(log_data, task_data, sleep_data):
         day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
     )
     energy_series = [
-        {"time": f"{hour}:00", "value": energy}
-        for hour, energy in zip(day_energy_data["Start Hour"], day_energy_data.index)
+        {"time": f"{hour}:00", "value": idx}
+        for hour, idx in zip(day_energy_data["Start Hour"], day_energy_data.index)
     ]
 
     # Prepare Task Weight Data
     task_weight_series = [
-        {"time": f"{hour}:00", "value": len(task.split()) if isinstance(task, str) else 0}
-        for hour, task in zip(day_energy_data["Start Hour"], day_energy_data["Activity Type"])
+        {"time": f"{hour}:00", "value": len(activity.split()) if isinstance(activity, str) else 0}
+        for hour, activity in zip(day_energy_data["Start Hour"], day_energy_data["Activity Type"])
     ]
 
     # Prepare Sleep Series Data
