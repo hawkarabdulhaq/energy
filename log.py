@@ -32,16 +32,21 @@ def log_energy_page(log_data, save_to_local):
     st.subheader("2️⃣ Rate Your Energy Level")
     energy_level = st.slider("Rate your energy level (1-10)", 1, 10, 5)
 
-    # Step 3: Activity Type Selection with Buttons
+    # Step 3: Activity Type Selection with Expandable Sections
     st.subheader("3️⃣ Select Activity Type")
     activity_categories = get_activity_types()  # Fetch activity categories
 
+    selected_activity = None  # Temporary variable for selection
     for category, activities in activity_categories.items():
-        st.markdown(f"**{category}**")
-        activity_cols = st.columns(len(activities))
-        for i, activity in enumerate(activities):
-            if activity_cols[i].button(activity):
-                st.session_state["selected_activity"] = activity
+        with st.expander(f"📂 {category}"):
+            selected_activity = st.radio(
+                f"Select an activity from {category}",
+                activities,
+                key=f"radio_{category}",
+            )
+            # Update the selected activity in session state
+            if selected_activity:
+                st.session_state["selected_activity"] = selected_activity
 
     # Show selected activity
     if st.session_state.get("selected_activity"):
