@@ -10,7 +10,7 @@ from task import task_page        # Import the Task Management page
 
 # GitHub Configuration
 GITHUB_REPO = "hawkarabdulhaq/energy"  # Your GitHub repository
-ENERGY_FILE_PATH = "database/local_logs.json"  # Energy logs file in repo
+ENERGY_FILE_PATH = "database/energy_logs.json"  # Updated energy logs file path
 TASK_FILE_PATH = "database/task.json"          # Task logs file in repo
 SLEEP_FILE_PATH = "database/sleep.json"        # Sleep logs file in repo
 GITHUB_PAT = st.secrets["github_pat"]          # Access GitHub PAT from secrets
@@ -101,4 +101,8 @@ elif st.session_state["page"] == "Log Tasks":
 
 elif st.session_state["page"] == "View Your Energy":
     # Now passing energy logs, tasks, and sleep data
-    view_logs_page(st.session_state["data"], st.session_state["tasks"], st.session_state["sleep_data"])
+    view_logs_page(
+        st.session_state["data"],  # Energy logs
+        st.session_state["tasks"],  # Task logs
+        st.session_state["sleep_data"],  # Sleep logs
+    )
