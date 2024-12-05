@@ -25,7 +25,7 @@ def sleep_page():
 
     cols = st.columns(len(sleep_start_times) // 2)
     for i, time in enumerate(sleep_start_times):
-        if cols[i % len(cols)].button(time):
+        if cols[i % len(cols)].button(time, key=f"sleep_start_{time}"):
             st.session_state["selected_sleep_start"] = time
 
     if "selected_sleep_start" in st.session_state:
@@ -39,7 +39,7 @@ def sleep_page():
 
     cols = st.columns(len(wake_up_times) // 2)
     for i, time in enumerate(wake_up_times):
-        if cols[i % len(cols)].button(time):
+        if cols[i % len(cols)].button(time, key=f"wake_up_{time}"):
             st.session_state["selected_wake_up"] = time
 
     if "selected_wake_up" in st.session_state:
@@ -62,7 +62,7 @@ def sleep_page():
         st.write(f"🕒 You slept for **{hours} hours and {minutes} minutes**.")
 
         # Button to Save Sleep Data
-        if st.button("Save Sleep Log"):
+        if st.button("Save Sleep Log", key="save_sleep_log"):
             sleep_entry = {
                 "Sleep Start": selected_sleep_start,
                 "Wake Up": selected_wake_up,
