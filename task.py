@@ -21,15 +21,26 @@ def load_tasks():
         return []
 
 def save_to_local(tasks):
-    """Save tasks to the task.json file."""
+    """Save tasks to the task.json file with enhanced debugging."""
     try:
         st.write("DEBUG: Saving tasks to file...")
         os.makedirs(os.path.dirname(TASKS_JSON_FILE), exist_ok=True)
         with open(TASKS_JSON_FILE, "w") as file:
             json.dump(tasks, file, indent=4)
+
+        # Check if the file exists and display its contents
+        if os.path.exists(TASKS_JSON_FILE):
+            st.write(f"DEBUG: {TASKS_JSON_FILE} exists.")
+            with open(TASKS_JSON_FILE, "r") as file:
+                saved_data = json.load(file)
+                st.write(f"DEBUG: Content of {TASKS_JSON_FILE}: {saved_data}")
+        else:
+            st.error(f"DEBUG: {TASKS_JSON_FILE} was not created.")
+
         st.write("DEBUG: Tasks saved successfully.")
     except Exception as e:
         st.error(f"Error saving tasks: {e}")
+
 
 def save_task(task_entry, task_data):
     """Save a single task entry."""
