@@ -6,11 +6,12 @@ def view_logs_page(log_data, task_data, sleep_data):
     """View Logs page with a combo chart for Energy Levels, Task Weights, and Sleep Patterns."""
     st.title("📊 Daily Energy Levels, Tasks, and Sleep Logs")
 
+    # Check if energy data is available
     if not log_data:
-        st.warning("⚠️ No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
+        st.warning("⚠️ No energy entries logged yet. Go to the 'Log Energy' page to add your first entry.")
         return
 
-    # Convert log data to DataFrame
+    # Convert energy log data to DataFrame
     energy_df = pd.DataFrame(log_data)
 
     # Convert task data to DataFrame
@@ -19,31 +20,32 @@ def view_logs_page(log_data, task_data, sleep_data):
     # Convert sleep data to DataFrame
     sleep_df = pd.DataFrame(sleep_data) if sleep_data else pd.DataFrame(columns=["Sleep Start", "Wake Up", "Duration (hrs)", "Timestamp"])
 
-    # Filter logs by selected date
+    # Filter energy logs by selected date
     st.subheader("📅 Select a Date")
     energy_df["Timestamp"] = pd.to_datetime(energy_df["Timestamp"])
     available_dates = energy_df["Timestamp"].dt.date.unique()
     selected_date = st.selectbox("Choose a date to view your logs", available_dates, key="select_date")
 
-    # Filter energy data for the selected date
+    # Filter energy logs for the selected date
     day_energy_data = energy_df[energy_df["Timestamp"].dt.date == selected_date]
 
     if day_energy_data.empty:
         st.info(f"No energy logs available for {selected_date}.")
         return
 
-    # Filter sleep data for the selected date
-    selected_sleep_data = sleep_df[sleep_df["Timestamp"].str.startswith(str(selected_date))] if not sleep_df.empty else pd.DataFrame()
+    # Filter sleep logs for the selected date
+    sleep_df["Timestamp"] = pd.to_datetime(sleep_df["Timestamp"])
+    selected_sleep_data = sleep_df[sleep_df["Timestamp"].dt.date == selected_date]
 
-    # Task data is not date-specific but can be used for visualization
+    # Task data is not date-specific; display all tasks
 
     # Prepare Energy Series Data
     day_energy_data["Start Hour"] = (
         day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
     )
     energy_series = [
-        {"time": f"{hour}:00", "value": index}
-        for hour, index in zip(day_energy_data["Start Hour"], day_energy_data.index)
+        {"time": f"{hour}:00", "value": i + 1}
+        for hour, i in zip(day_energy_data["Start Hour"], range(len(day_energy_data)))
     ]
 
     # Prepare Task Weight Data
@@ -56,12 +58,10 @@ def view_logs_page(log_data, task_data, sleep_data):
     if not selected_sleep_data.empty:
         sleep_series = [
             {
-                "time": f"{start}:00",
+                "time": sleep_start,
                 "value": duration,
             }
-            for start, duration in zip(
-                selected_sleep_data["Sleep Start"], selected_sleep_data["Duration (hrs)"]
-            )
+            for sleep_start, duration in zip(selected_sleep_data["Sleep Start"], selected_sleep_data["Duration (hrs)"])
         ]
     else:
         sleep_series = []
