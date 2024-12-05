@@ -8,6 +8,9 @@ st.title("Energy Log App")
 if "data" not in st.session_state:
     st.session_state["data"] = []
 
+if "selected_block" not in st.session_state:
+    st.session_state["selected_block"] = None
+
 # Sidebar for Navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Log Energy", "View Logs"])
@@ -19,7 +22,16 @@ if page == "Log Energy":
     # Time Block Selection as Buttons
     st.subheader("Select Time Block")
     time_blocks = ["6–8 AM", "8–10 AM", "10–12 PM", "12–2 PM", "2–4 PM", "4–6 PM", "6–8 PM"]
-    selected_block = st.radio("Time Block", time_blocks, horizontal=True)
+
+    # Create buttons for time blocks
+    cols = st.columns(len(time_blocks))
+    for i, block in enumerate(time_blocks):
+        if cols[i].button(block):
+            st.session_state["selected_block"] = block
+
+    # Display the selected time block
+    if st.session_state["selected_block"]:
+        st.write(f"**Selected Time Block:** {st.session_state['selected_block']}")
 
     # Energy Level Input
     st.subheader("Energy Level")
@@ -35,16 +47,20 @@ if page == "Log Energy":
 
     # Button to save log
     if st.button("Save Entry"):
-        # Append the entry to session state
-        st.session_state["data"].append({
-            "Time Block": selected_block,
-            "Energy Level": energy_level,
-            "Task": task,
-            "Notes": notes
-        })
-        st.success("Entry saved!")
-        # Clear inputs for better experience
-        st.experimental_rerun()
+        if st.session_state["selected_block"]:
+            # Append the entry to session state
+            st.session_state["data"].append({
+                "Time Block": st.session_state["selected_block"],
+                "Energy Level": energy_level,
+                "Task": task,
+                "Notes": notes
+            })
+            st.success("Entry saved!")
+            # Reset selected block for a fresh start
+            st.session_state["selected_block"] = None
+            st.experimental_rerun()
+        else:
+            st.error("Please select a time block before saving.")
 
 # Page 2: View Logs
 if page == "View Logs":
