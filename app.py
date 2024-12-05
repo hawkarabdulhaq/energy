@@ -40,22 +40,6 @@ def save_local_logs(logs):
         json.dump(logs, file, indent=4)
 
 
-# Fetch logs from GitHub
-def fetch_logs_from_github():
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
-    response = requests.get(url, headers=HEADERS)
-
-    if response.status_code == 200:
-        content = json.loads(base64.b64decode(response.json()["content"]).decode("utf-8"))
-        return content
-    elif response.status_code == 404:
-        st.warning("No logs found in the GitHub repository.")
-        return []
-    else:
-        st.error(f"Error fetching logs from GitHub: {response.status_code}")
-        return []
-
-
 # Push logs to GitHub
 def push_logs_to_github(logs):
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
@@ -78,14 +62,15 @@ def push_logs_to_github(logs):
     # Push data to GitHub
     push_response = requests.put(url, headers=HEADERS, data=json.dumps(payload))
     if push_response.status_code in [200, 201]:
-        st.success("Logs pushed to GitHub successfully!")
+        st.success("Logs synced to GitHub successfully!")
     else:
-        st.error(f"Error pushing logs to GitHub: {push_response.status_code}")
+        st.error(f"Error syncing logs to GitHub: {push_response.status_code}")
 
 
 # Load logs into session state on app start
 if not st.session_state["data"]:
     st.session_state["data"] = load_local_logs()
+
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
@@ -93,8 +78,6 @@ if st.sidebar.button("Log Energy"):
     st.session_state["page"] = "Log Energy"
 if st.sidebar.button("View Logs"):
     st.session_state["page"] = "View Logs"
-if st.sidebar.button("Push to GitHub"):
-    st.session_state["page"] = "Push to GitHub"
 
 # Page: Log Energy
 if st.session_state["page"] == "Log Energy":
@@ -138,7 +121,8 @@ if st.session_state["page"] == "Log Energy":
             }
             st.session_state["data"].append(new_entry)
             save_local_logs(st.session_state["data"])  # Save to local DB
-            st.success("Entry saved!")
+            push_logs_to_github(st.session_state["data"])  # Auto-sync to GitHub
+            st.success("Entry saved and synced to GitHub!")
             st.session_state["selected_block"] = None  # Reset selected block
         else:
             st.error("Please select a time block before saving.")
@@ -153,19 +137,3 @@ elif st.session_state["page"] == "View Logs":
         st.dataframe(df)
     else:
         st.write("No entries logged yet. Go to the 'Log Energy' page to add your first entry.")
-
-# Page: Push to GitHub
-elif st.session_state["page"] == "Push to GitHub":
-    st.header("Push Your Logs to GitHub")
-
-    if st.button("Fetch Existing Logs"):
-        existing_logs = fetch_logs_from_github()
-        st.session_state["data"] = existing_logs + st.session_state["data"]
-        save_local_logs(st.session_state["data"])  # Save merged logs locally
-        st.success("Fetched and merged logs from GitHub!")
-
-    if st.button("Push Logs to GitHub"):
-        if st.session_state["data"]:
-            push_logs_to_github(st.session_state["data"])
-        else:
-            st.warning("No logs to push!")
