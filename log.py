@@ -47,14 +47,6 @@ def log_energy_page(log_data, save_to_local):
                     st.session_state["selected_activity"] = selected_activity
                     st.write(f"✅ **You selected:** {selected_activity}")
 
-    # Step 4: Additional Details (Optional)
-    st.subheader("4️⃣ Additional Details")
-    task = st.text_input("Add more details about the activity (optional):")
-
-    # Step 5: Notes (Optional)
-    st.subheader("5️⃣ Notes")
-    notes = st.text_area("Add any notes or observations (optional):")
-
     # Save Entry Button
     if st.button("Save Entry"):
         if st.session_state.get("selected_block") and st.session_state.get("selected_activity"):
@@ -62,8 +54,6 @@ def log_energy_page(log_data, save_to_local):
                 "Time Block": st.session_state["selected_block"],
                 "Energy Level": energy_level,
                 "Activity Type": st.session_state["selected_activity"],
-                "Task": task,
-                "Notes": notes,
                 "Timestamp": str(datetime.datetime.now()),
             }
             save_log(new_entry, log_data, save_to_local)
