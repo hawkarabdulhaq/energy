@@ -3,16 +3,16 @@ import pandas as pd
 import plotly.graph_objects as go
 
 def view_logs_page(log_data, task_data, sleep_data):
-    """View Logs page with Plotly visualizations for Energy Levels, Task Weights, and Sleep Patterns."""
+    """View Logs page with Plotly visualizations for Energy Levels, Activity Types, Task Weights, and Sleep Patterns."""
     st.title("📊 Daily Energy Levels, Tasks, and Sleep Logs")
 
     # Energy level mapping
     energy_mapping = {
-        "Exhausted 😴": 1,  # Low energy
-        "Fatigued 😓": 2,   # Slightly higher than exhausted
-        "Balanced 😐": 3,   # Neutral energy
-        "Energized 🚀": 4,  # Positive, ready to work
-        "Recharged 🌟": 5   # Fully refreshed
+        "Exhausted 😴": 1,
+        "Fatigued 😓": 2,
+        "Balanced 😐": 3,
+        "Energized 🚀": 4,
+        "Recharged 🌟": 5
     }
 
     # Convert data to DataFrames
@@ -55,14 +55,18 @@ def view_logs_page(log_data, task_data, sleep_data):
     # Plotly chart
     fig = go.Figure()
 
-    # Add energy data
+    # Add energy data with Activity Type annotations
     fig.add_trace(go.Scatter(
         x=day_energy_data["Start Hour"],
         y=day_energy_data["Energy Numeric"],  # Mapped energy levels
-        mode="lines+markers",
+        mode="lines+markers+text",
         name="Energy Levels",
         line=dict(color="rgba(38,198,218,1)", width=2),
-        marker=dict(size=8)
+        marker=dict(size=8),
+        text=day_energy_data["Activity Type"],  # Display activity type on hover
+        hovertemplate="<b>Hour:</b> %{x}:00<br>" +
+                      "<b>Energy Level:</b> %{y}<br>" +
+                      "<b>Activity:</b> %{text}<extra></extra>"
     ))
 
     # Add sleep data
@@ -72,12 +76,13 @@ def view_logs_page(log_data, task_data, sleep_data):
             y=selected_sleep_data["Duration (hrs)"],
             mode="markers",
             name="Sleep Duration",
-            marker=dict(color="rgba(255,99,132,1)", size=12)
+            marker=dict(color="rgba(255,99,132,1)", size=12),
+            hovertemplate="<b>Duration:</b> %{y} hrs<extra></extra>"
         ))
 
     # Customize layout
     fig.update_layout(
-        title="Energy Levels and Sleep Patterns",
+        title="Energy Levels, Activities, and Sleep Patterns",
         xaxis_title="Hour of the Day",
         yaxis_title="Energy Levels (1-5) / Sleep Duration (hrs)",
         xaxis=dict(tickmode="linear", dtick=1),
