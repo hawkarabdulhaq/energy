@@ -43,13 +43,14 @@ def view_logs_page(log_data, task_data, sleep_data):
         st.warning("⚠️ No energy logs available.")
         return
 
-    # Map energy levels to numerical values
+    # Map energy levels to numerical values and extract start hour
     day_energy_data["Energy Numeric"] = day_energy_data["Energy Level"].map(energy_mapping)
-
-    # Prepare data for the chart
     day_energy_data["Start Hour"] = (
         day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
     )
+
+    # Sort data by Start Hour (early to late)
+    day_energy_data = day_energy_data.sort_values(by="Start Hour")
 
     # Plotly chart
     fig = go.Figure()
