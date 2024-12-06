@@ -6,6 +6,15 @@ def view_logs_page(log_data, task_data, sleep_data):
     """View Logs page with Plotly visualizations for Energy Levels, Task Weights, and Sleep Patterns."""
     st.title("📊 Daily Energy Levels, Tasks, and Sleep Logs")
 
+    # Energy level mapping
+    energy_mapping = {
+        "Exhausted 😴": 1,  # Low energy
+        "Fatigued 😓": 2,   # Slightly higher than exhausted
+        "Balanced 😐": 3,   # Neutral energy
+        "Energized 🚀": 4,  # Positive, ready to work
+        "Recharged 🌟": 5   # Fully refreshed
+    }
+
     # Convert data to DataFrames
     energy_df = pd.DataFrame(log_data) if log_data else pd.DataFrame(columns=["Time Block", "Energy Level", "Activity Type", "Timestamp"])
     task_df = pd.DataFrame(task_data) if task_data else pd.DataFrame(columns=["Task Type", "Task Length"])
@@ -34,6 +43,9 @@ def view_logs_page(log_data, task_data, sleep_data):
         st.warning("⚠️ No energy logs available.")
         return
 
+    # Map energy levels to numerical values
+    day_energy_data["Energy Numeric"] = day_energy_data["Energy Level"].map(energy_mapping)
+
     # Prepare data for the chart
     day_energy_data["Start Hour"] = (
         day_energy_data["Time Block"].str.split("–").str[0].str.split(" ").str[0].astype(int)
@@ -45,7 +57,7 @@ def view_logs_page(log_data, task_data, sleep_data):
     # Add energy data
     fig.add_trace(go.Scatter(
         x=day_energy_data["Start Hour"],
-        y=[i + 1 for i in range(len(day_energy_data))],  # Sequential energy values
+        y=day_energy_data["Energy Numeric"],  # Mapped energy levels
         mode="lines+markers",
         name="Energy Levels",
         line=dict(color="rgba(38,198,218,1)", width=2),
@@ -66,7 +78,7 @@ def view_logs_page(log_data, task_data, sleep_data):
     fig.update_layout(
         title="Energy Levels and Sleep Patterns",
         xaxis_title="Hour of the Day",
-        yaxis_title="Levels",
+        yaxis_title="Energy Levels (1-5) / Sleep Duration (hrs)",
         xaxis=dict(tickmode="linear", dtick=1),
         height=400,
         template="plotly_white"
